@@ -44,3 +44,10 @@ export interface GraphData {
   nodes: ArchNode[]
   edges: ArchEdge[]
 }
+
+export interface GraphMeta {
+  files: number
+  symbols: number
+  edges: number
+  nodeTypeCounts: Record<NodeType, number>
+}

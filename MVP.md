@@ -309,6 +309,372 @@ AuthController.login
   → JwtService.generateToken
 ```
 
+## Output Modes and Formatters
+
+Arch commands must support multiple output modes so the same core architecture query can be consumed by different systems.
+
+### Purpose
+
+Arch is not only a terminal tool.
+It must also be usable by:
+
+- scripts
+- IDE integrations
+- agent/tool integrations
+- LLM workflows
+
+Because of that, command results must be renderable in multiple formats.
+
+### Supported Output Modes
+
+Every command that returns structured data should support these output modes where applicable.
+
+#### 1. Human-readable terminal output
+
+Default mode.
+
+This is optimized for developers running Arch directly in the CLI.
+
+Example:
+
+```
+arch context authentication
+```
+
+Output:
+
+```
+Context: authentication
+
+Entrypoints
+  AuthController.login
+
+Flow
+  AuthController.login
+    → AuthService.login
+      → JwtService.generateToken
+
+Files
+  src/auth/AuthController.ts
+  src/auth/AuthService.ts
+  src/auth/JwtService.ts
+```
+
+#### 2. JSON output
+
+Machine-readable mode.
+
+This is intended for:
+
+- scripts
+- IDE plugins
+- CI tooling
+- custom agents
+- future Arch server mode
+
+Example:
+
+```
+arch context authentication --json
+```
+
+Output:
+
+```json
+{
+  "query": "authentication",
+  "entrypoints": ["AuthController.login"],
+  "files": [
+    "src/auth/AuthController.ts",
+    "src/auth/AuthService.ts",
+    "src/auth/JwtService.ts"
+  ],
+  "paths": [
+    [
+      "AuthController.login",
+      "AuthService.login",
+      "JwtService.generateToken"
+    ]
+  ]
+}
+```
+
+#### 3. LLM markdown output
+
+Markdown output optimized for use with LLM tools.
+
+This is intended for:
+
+- ChatGPT
+- Claude
+- Cursor chat
+- local LLM tools
+- copy/paste into prompts
+
+Example:
+
+```
+arch context authentication --format llm
+```
+
+Output:
+
+```markdown
+# Authentication Architecture
+
+## Entrypoint
+AuthController.login()
+
+## Flow
+AuthController.login → AuthService.login → JwtService.generateToken
+
+## Relevant Files
+- src/auth/AuthController.ts
+- src/auth/AuthService.ts
+- src/auth/JwtService.ts
+
+## Key Snippets
+...
+```
+
+This mode must be concise, structured, and optimized for prompt quality.
+
+### Output Design Rule
+
+Commands must separate:
+
+- query execution
+- result rendering
+
+This means the internal logic should first produce a structured result object, and then pass it to an output formatter.
+
+Example pipeline:
+
+```
+command
+  ↓
+query engine
+  ↓
+structured result object
+  ↓
+formatter
+  ├─ terminal formatter
+  ├─ json formatter
+  └─ llm formatter
+```
+
+This keeps Arch clean and extensible.
+
+### Commands That Must Support Output Modes
+
+The following commands should support multiple output modes.
+
+| Command | Human | JSON | LLM |
+| --- | --- | --- | --- |
+| `arch build` | yes | yes | no |
+| `arch stats` | yes | yes | no |
+| `arch query` | yes | yes | optional |
+| `arch deps` | yes | yes | optional |
+| `arch show` | yes | yes | yes |
+| `arch context` | yes | yes | yes |
+
+Notes:
+
+- `build` and `stats` do not need LLM formatting in MVP
+- `context` is the highest priority for LLM formatting
+- `show` may also benefit from LLM formatting
+- `query` and `deps` can add LLM formatting later if useful
+
+### CLI Flag Rules
+
+#### JSON output
+
+Use:
+
+```
+--json
+```
+
+This should always output valid JSON only, with no extra log lines.
+
+Bad:
+
+```
+Scanning repository...
+{ ...json... }
+```
+
+Good:
+
+```
+{ ...json... }
+```
+
+This is important so scripts and agents can parse output safely.
+
+#### Format output
+
+Use:
+
+```
+--format <value>
+```
+
+Supported values in MVP:
+
+- `human`
+- `llm`
+
+Rules:
+
+- default format is `human`
+- `--json` takes precedence over `--format`
+- `--format llm` outputs markdown
+- `--format human` is equivalent to default CLI output
+
+Examples:
+
+```
+arch context authentication
+arch context authentication --format human
+arch context authentication --format llm
+arch context authentication --json
+```
+
+### Formatter Architecture
+
+Create a formatter layer in the project.
+
+Suggested package/module location:
+
+- `packages/arch-core/src/output/`
+  or
+- `packages/arch-cli/src/formatters/`
+
+Preferred design:
+
+- command handlers return typed result objects
+- formatters are pure functions
+- formatters do not perform graph queries
+- formatters only transform result objects into output strings or JSON
+
+Example concept:
+
+```ts
+type OutputMode = "human" | "json" | "llm"
+```
+
+Example formatter API:
+
+```ts
+formatContextResult(result, "human")
+formatContextResult(result, "json")
+formatContextResult(result, "llm")
+```
+
+### Result Object Contracts
+
+Every command should produce a typed internal result object before rendering.
+
+Context result:
+
+```ts
+interface ContextResult {
+  query: string
+  entrypoints: string[]
+  files: string[]
+  paths: string[][]
+  snippets: Array<{
+    nodeId: string
+    file: string
+    symbol: string
+    startLine: number
+    endLine: number
+    code?: string
+    reason?: string
+  }>
+}
+```
+
+Query result:
+
+```ts
+interface QueryResult {
+  term: string
+  matches: Array<{
+    nodeId: string
+    type: string
+    name: string
+    file: string
+  }>
+}
+```
+
+Deps result:
+
+```ts
+interface DepsResult {
+  symbol: string
+  imports: string[]
+  calls: string[]
+  callers: string[]
+}
+```
+
+This ensures consistent rendering across output modes.
+
+### LLM Output Best Practices
+
+LLM output must be:
+
+- markdown
+- concise
+- structured with headings
+- deterministic
+- free of terminal decoration
+- free of ANSI colors
+- optimized to reduce token waste
+
+LLM output should prioritize:
+
+- entrypoints
+- dependency flow
+- relevant files
+- minimal snippets
+
+LLM output must not dump entire files unless explicitly requested.
+
+### JSON Output Best Practices
+
+JSON output must be:
+
+- stable
+- typed
+- parseable
+- deterministic
+- free of log noise
+
+JSON field names should remain consistent across versions whenever possible.
+
+If breaking changes are introduced later, Arch should version output contracts.
+
+### Human Output Best Practices
+
+Human output should be:
+
+- readable in terminal
+- concise
+- easy to scan
+- friendly for debugging
+
+Human output may use:
+
+- indentation
+- section headers
+- arrows for flow
+
+Human output must not be the only supported mode for structured commands.
+
 ## Context Compiler
 
 The context compiler returns:
@@ -473,7 +839,41 @@ Commands:
 
 - `arch context`
 
-Phase 5 — Optional AI Integrations
+Phase 5 — Output Modes and Formatters
+
+Features:
+
+- typed result interfaces for each command
+- command handlers return result objects instead of printing directly
+- formatter layer with pure functions
+- human output formatter for structured commands
+- `--json` support for structured commands
+- `--format llm` for `arch context`
+- `--format llm` for `arch show`
+- tests for formatter outputs
+
+Implementation order:
+
+1. define typed result interfaces for each command
+2. make command handlers return result objects instead of printing directly
+3. build human formatter
+4. add `--json`
+5. add `--format llm` for `arch context`
+6. add `--format llm` for `arch show`
+7. add tests for all formatter outputs
+
+Phase 6 — Programmatic Consumption
+
+Possible features:
+
+- `arch serve`
+- local HTTP API
+- MCP/server adapter
+- SDK wrapper for agents and IDEs
+
+This phase depends on the output contracts from Phase 5.
+
+Phase 7 — Optional AI Integrations
 
 Possible future features:
 

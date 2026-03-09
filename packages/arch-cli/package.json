@@ -2,7 +2,6 @@
   "name": "@arch/cli",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "bin": {
     "arch": "dist/index.js"
   },
@@ -11,7 +10,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {

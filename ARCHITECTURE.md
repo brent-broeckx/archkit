@@ -23,6 +23,20 @@ Design constraints:
 - TypeScript-first in MVP
 - no AI, embeddings, or vector search in core workflow
 
+## Code Organization Standard
+
+To keep Arch readable and maintainable, implementation must use a modular folder structure.
+
+Required conventions:
+
+- do not implement large features in a single source file
+- split code by responsibility into focused directories such as `models`, `services`, `utils`, and `commands` (for CLI)
+- keep modules small, cohesive, and easy to navigate
+- keep package entrypoints (`src/index.ts`) thin and focused on exports/composition
+- prefer clear naming and explicit boundaries over dense multi-purpose files
+
+This standard applies to all packages and future phases.
+
 ## 2) Graph Model
 
 Architecture is represented by typed nodes and typed edges.

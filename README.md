@@ -27,13 +27,13 @@ pnpm build
 pnpm --filter @arch/cli exec arch
 ```
 
-## Commands (scaffolded)
+## Commands
 
-- `arch build`
-- `arch stats`
-- `arch query`
+- `arch build` (implemented)
+- `arch stats` (implemented)
+- `arch query` (implemented)
 - `arch deps`
-- `arch show`
+- `arch show` (implemented)
 - `arch context`
 
 For full product requirements, see `MVP.md`.
