@@ -1,0 +1,37 @@
+name: Changeset Required
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  changeset-check:
+    name: Enforce changeset for package source changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            package_source:
+              - 'packages/**/src/**'
+            changeset:
+              - '.changeset/*.md'
+              - '!.changeset/README.md'
+
+      - name: Validate changeset presence
+        if: steps.filter.outputs.package_source == 'true' && steps.filter.outputs.changeset != 'true'
+        run: |
+          echo "Package source files changed but no changeset was found."
+          echo "Run 'pnpm changeset' and commit the generated .changeset/*.md file."
+          exit 1
+
+      - name: Pass when check is not required
+        if: steps.filter.outputs.package_source != 'true' || steps.filter.outputs.changeset == 'true'
+        run: echo "Changeset check passed."

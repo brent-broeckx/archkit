@@ -53,6 +53,52 @@ Current quality gate:
 
 - global coverage thresholds: `80%` for lines, statements, branches, and functions
 
+## CI and CD
+
+### Pull request validation
+
+GitHub Actions workflow `CI` runs on every pull request to `main` and on pushes to `main`.
+
+GitHub Actions workflow `Changeset Required` runs on pull requests to `main` and fails when package source files change without a `.changeset/*.md` entry.
+
+It enforces:
+
+- dependency install with frozen lockfile
+- package build (`pnpm -r build`)
+- typecheck (`pnpm typecheck`)
+- tests with coverage (`pnpm run test:coverage`)
+
+This workflow is intended to be a required status check before merge.
+
+### Release automation
+
+This repository uses Changesets for lockstep versioning and npm publishing.
+
+Release workflow `Release` runs on `main`:
+
+1. It runs install, build, typecheck, and tests again.
+2. If pending changesets exist, it opens or updates a `Version Packages` pull request.
+3. When that pull request is merged, it publishes packages to npm and creates release tags.
+
+### Add a changeset
+
+Before merging a package change, run:
+
+```bash
+pnpm changeset
+```
+
+Commit the generated file in `.changeset/` with your pull request.
+
+### Required GitHub repository setup
+
+1. Add repository secret `NPM_TOKEN` with publish permission for the `@arch` scope.
+2. Enable branch protection on `main`.
+3. Require status check `Build and Test` from workflow `CI`.
+4. Require status check `Enforce changeset for package source changes` from workflow `Changeset Required`.
+5. Require at least one pull request review.
+6. Disable direct pushes to `main`.
+
 Testing strategy highlights:
 
 - deterministic assertions only (stable sorting, normalized paths, fixed fixture data)

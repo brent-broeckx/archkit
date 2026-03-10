@@ -1,7 +1,22 @@
 {
   "name": "@arch/context",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brent-broeckx/arch.git",
+    "directory": "packages/arch-context"
+  },
+  "homepage": "https://github.com/brent-broeckx/arch#readme",
+  "bugs": {
+    "url": "https://github.com/brent-broeckx/arch/issues"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
