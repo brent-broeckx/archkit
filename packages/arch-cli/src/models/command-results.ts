@@ -1,6 +1,6 @@
 import type { ContextBundle } from '@arch/context'
 import type { ArchNode, GraphMeta, NodeType } from '@arch/core'
-import type { DepsResult } from '@arch/graph'
+import type { DepsResult, KnowledgeEntry, KnowledgeEntrySummary } from '@arch/graph'
 
 export interface BuildCommandResult {
   repoPath: string
@@ -29,6 +29,33 @@ export interface ShowCommandResult {
   node: ArchNode
   snippet: string
 }
+
+export interface KnowledgeAddCommandResult {
+  action: 'add'
+  entry: KnowledgeEntry
+}
+
+export interface KnowledgeListCommandResult {
+  action: 'list'
+  entries: KnowledgeEntrySummary[]
+}
+
+export interface KnowledgeShowCommandResult {
+  action: 'show'
+  entry: KnowledgeEntry
+}
+
+export interface KnowledgeSearchCommandResult {
+  action: 'search'
+  query: string
+  matches: KnowledgeEntrySummary[]
+}
+
+export type KnowledgeCommandResult =
+  | KnowledgeAddCommandResult
+  | KnowledgeListCommandResult
+  | KnowledgeShowCommandResult
+  | KnowledgeSearchCommandResult
 
 export type DepsCommandResult = DepsResult
 export type ContextCommandResult = ContextBundle

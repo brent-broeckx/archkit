@@ -35,6 +35,7 @@ pnpm exec arch
 - `arch deps` (implemented)
 - `arch show` (implemented)
 - `arch context` (implemented)
+- `arch knowledge add|list|show|search` (implemented)
 
 ### `arch build`
 
@@ -154,6 +155,35 @@ Current limitations / notes:
 - graph expansion is bounded (depth 3) and deterministic
 - context budgets are enforced: max snippets `20`, max files `12`, max lines `1200`
 - query scoring is deterministic but intentionally lightweight in MVP
+
+### `arch knowledge`
+
+Stores and retrieves architecture notes as local markdown entries under `.arch/knowledge`.
+
+Examples:
+
+```bash
+pnpm arch knowledge add \
+	--type workaround \
+	--feature authentication \
+	--title "OIDC clock skew issue" \
+	--body "Allow 2 minute skew because some client machines had incorrect system time." \
+	--tags oidc,auth
+
+pnpm arch knowledge list
+pnpm arch knowledge show oidc-clock-skew-issue
+pnpm arch knowledge search "clock skew"
+pnpm arch knowledge show oidc-clock-skew-issue --json
+pnpm arch knowledge search authentication --format llm
+```
+
+Current limitations / notes:
+
+- supported types: `decision`, `workaround`, `caveat`, `note`, `migration`
+- ids are generated deterministically from title (slug format)
+- duplicate ids are rejected
+- entries are persisted in markdown with frontmatter and indexed in `.arch/knowledge/index.json`
+- search is deterministic case-insensitive substring matching over id, title, feature, tags, and body
 
 ## Output Modes
 

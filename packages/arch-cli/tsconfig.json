@@ -6,7 +6,7 @@
     "composite": true,
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
-  "include": ["src"],
+  "include": ["src/**/*.ts"],
   "references": [
     { "path": "../arch-core" },
     { "path": "../arch-parser-ts" },

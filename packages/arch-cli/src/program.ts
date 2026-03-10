@@ -2,6 +2,13 @@ import { Command } from 'commander'
 import { runBuildCommand } from './commands/build'
 import { runContextCommand } from './commands/context'
 import { runDepsCommand } from './commands/deps'
+import {
+  type KnowledgeAddOptions,
+  runKnowledgeAddCommand,
+  runKnowledgeListCommand,
+  runKnowledgeSearchCommand,
+  runKnowledgeShowCommand,
+} from './commands/knowledge'
 import { runQueryCommand } from './commands/query'
 import { runShowCommand } from './commands/show'
 import { runStatsCommand } from './commands/stats'
@@ -77,6 +84,53 @@ export function buildProgram(): Command {
     .option('--format <format>', 'Output format (human|llm)', 'human')
     .action(async (query: string | undefined, outputOptions: OutputOptions) => {
       await runContextCommand(query, outputOptions)
+    })
+
+  const knowledgeCommand = program
+    .command('knowledge')
+    .description('Manage architecture knowledge entries')
+
+  knowledgeCommand
+    .command('add')
+    .description('Add a knowledge entry')
+    .requiredOption('--type <type>', 'Knowledge type')
+    .requiredOption('--title <title>', 'Knowledge title')
+    .requiredOption('--body <body>', 'Knowledge body')
+    .option('--feature <feature>', 'Feature group', 'general')
+    .option('--tags <tags>', 'Comma-separated tags')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (options: KnowledgeAddOptions) => {
+      await runKnowledgeAddCommand(options)
+    })
+
+  knowledgeCommand
+    .command('list')
+    .description('List knowledge entries')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (outputOptions: OutputOptions) => {
+      await runKnowledgeListCommand(outputOptions)
+    })
+
+  knowledgeCommand
+    .command('show')
+    .description('Show a knowledge entry')
+    .argument('<id>', 'Knowledge entry id')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (id: string, outputOptions: OutputOptions) => {
+      await runKnowledgeShowCommand(id, outputOptions)
+    })
+
+  knowledgeCommand
+    .command('search')
+    .description('Search knowledge entries')
+    .argument('<query>', 'Knowledge search query')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (query: string, outputOptions: OutputOptions) => {
+      await runKnowledgeSearchCommand(query, outputOptions)
     })
 
   return program
