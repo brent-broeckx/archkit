@@ -27,6 +27,40 @@ pnpm build
 pnpm exec arch
 ```
 
+## Testing
+
+Arch uses Vitest for unit, integration, and command-level regression tests.
+
+Run tests:
+
+```bash
+pnpm test
+```
+
+Run in watch mode:
+
+```bash
+pnpm run test:watch
+```
+
+Run with coverage:
+
+```bash
+pnpm run test:coverage
+```
+
+Current quality gate:
+
+- global coverage thresholds: `80%` for lines, statements, branches, and functions
+
+Testing strategy highlights:
+
+- deterministic assertions only (stable sorting, normalized paths, fixed fixture data)
+- core service coverage across parser, graph persistence/querying, and context compilation
+- command coverage for `build`, `stats`, `query`, `deps`, `show`, `context`, and `knowledge` flows
+- CLI wiring coverage through `program` command routing tests
+- filesystem-backed integration fixtures for `.arch` graph and knowledge storage behavior
+
 ## Commands
 
 - `arch build` (implemented)

@@ -133,6 +133,45 @@ Generated data is persisted under `.arch`:
 5. Context compiler selects relevant files/snippets for output.
 6. CLI orchestrates the flow and prints deterministic results.
 
+## 5) Testing Strategy
+
+Arch uses a Vitest-based test pyramid with deterministic-first checks.
+
+### Test Layers
+
+- Unit tests
+  - pure utilities and deterministic transforms (sorting, normalization, formatting)
+- Integration tests
+  - parser -> graph extraction on fixture repositories
+  - graph persistence/readback under `.arch`
+  - knowledge storage lifecycle (add/list/show/search)
+- Command tests
+  - command execution success/error branches for all implemented CLI commands
+  - output mode behavior for `human`, `json`, and `llm`
+- CLI routing tests
+  - command registration and handler wiring in `program`
+
+### Deterministic Test Rules
+
+- avoid nondeterministic assertions (no timing-sensitive checks)
+- assert stable ordering where output is sorted
+- use normalized POSIX-style paths in expected output
+- keep fixture repositories small and explicit
+
+### Coverage Gates
+
+- global minimum coverage: `80%` for lines, statements, branches, and functions
+- coverage is enforced in Vitest configuration and validated via `pnpm run test:coverage`
+
+### Scope Focus
+
+- prioritize architecture-critical behavior:
+  - AST extraction and edge creation
+  - graph persistence/index integrity
+  - symbol resolution and dependency queries
+  - context compilation limits and deterministic selection
+  - CLI command error mapping and output formatting
+
 ## Context Bundle Format (MVP)
 
 ```ts

@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 export function normalizeToPosixPath(inputPath: string): string {
-  return inputPath.split(path.sep).join('/')
+  return inputPath.replace(/\\/g, '/')
 }
 
 export function toRelativePath(absolutePath: string, rootDir: string): string {

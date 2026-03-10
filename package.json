@@ -8,14 +8,19 @@
     "build": "tsx scripts/build.ts",
     "dev": "pnpm -r --parallel --if-present dev",
     "lint": "pnpm -r --if-present lint",
-    "typecheck": "tsc -b --pretty"
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@arch/cli": "workspace:*"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^3.2.4",
     "@types/node": "^22.13.10",
     "tsx": "^4.19.3",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
   }
 }

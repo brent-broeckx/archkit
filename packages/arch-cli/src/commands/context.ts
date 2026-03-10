@@ -16,7 +16,7 @@ export async function executeContextCommand(
 
   try {
     const compiler = new ContextCompiler()
-    return compiler.compile(cwd, { query: queryInput })
+    return await compiler.compile(cwd, { query: queryInput })
   } catch {
     throw new CliCommandError('GRAPH_NOT_FOUND', 'No graph data found. Run `arch build` first.')
   }
