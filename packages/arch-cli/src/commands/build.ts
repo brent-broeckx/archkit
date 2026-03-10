@@ -1,6 +1,6 @@
 import path from 'node:path'
-import { TypeScriptParser } from '@arch/parser-ts'
-import { persistGraph } from '@arch/graph'
+import { TypeScriptParser } from '@archkit/parser-ts'
+import { persistGraph } from '@archkit/graph'
 import { formatBuildResult } from '../formatters/build'
 import type { BuildCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'

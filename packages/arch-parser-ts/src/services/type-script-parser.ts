@@ -1,6 +1,6 @@
 import path from 'node:path'
 import { Project, type SourceFile } from 'ts-morph'
-import type { GraphData } from '@arch/core'
+import type { GraphData } from '@archkit/core'
 import type { ParseRepositoryOptions } from '../models/parser-types'
 import { discoverSourceFiles } from '../utils/file-discovery'
 import { sortEdges, sortNodes } from '../utils/sort-utils'

@@ -1,4 +1,4 @@
-import type { ArchNode } from '@arch/core'
+import type { ArchNode } from '@archkit/core'
 
 export interface SymbolQueryMatch {
   name: string

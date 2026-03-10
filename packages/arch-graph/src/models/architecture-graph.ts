@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode, GraphData } from '@arch/core'
+import type { ArchEdge, ArchNode, GraphData } from '@archkit/core'
 
 export class ArchitectureGraph {
   private readonly nodeMap = new Map<string, ArchNode>()

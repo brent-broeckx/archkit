@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 
 export interface ParseRepositoryOptions {
   rootDir: string

@@ -13,11 +13,11 @@ It analyzes TypeScript and JavaScript repositories using deterministic static an
 
 ## Monorepo packages
 
-- `@arch/core` — shared types and interfaces
-- `@arch/parser-ts` — TypeScript parser and extraction scaffolding
-- `@arch/graph` — graph storage and traversal scaffolding
-- `@arch/context` — context compilation scaffolding
-- `@arch/cli` — `arch` command scaffolding
+- `@archkit/core` — shared types and interfaces
+- `@archkit/parser-ts` — TypeScript parser and extraction scaffolding
+- `@archkit/graph` — graph storage and traversal scaffolding
+- `@archkit/context` — context compilation scaffolding
+- `@archkit/cli` — `arch` command scaffolding
 
 ## Quick start
 
@@ -92,7 +92,7 @@ Commit the generated file in `.changeset/` with your pull request.
 
 ### Required GitHub repository setup
 
-1. Add repository secret `NPM_TOKEN` with publish permission for the `@arch` scope.
+1. Add repository secret `NPM_TOKEN` with publish permission for the `@archkit` scope.
 2. Enable branch protection on `main`.
 3. Require status check `Build and Test` from workflow `CI`.
 4. Require status check `Enforce changeset for package source changes` from workflow `Changeset Required`.
@@ -296,6 +296,6 @@ JSON error shape:
 Use a consistent working directory for `build`, `stats`, `query`, `deps`, `show`, and `context`.
 
 - recommended: run from repository root with `pnpm arch ...`
-- using `pnpm --filter @arch/cli arch ...` runs from `packages/arch-cli` and uses that folder's `.arch` data
+- using `pnpm --filter @archkit/cli arch ...` runs from `packages/arch-cli` and uses that folder's `.arch` data
 
 For full product requirements, see `MVP.md`.

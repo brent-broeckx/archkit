@@ -1,4 +1,4 @@
-import type { SourceLoc } from '@arch/core'
+import type { SourceLoc } from '@archkit/core'
 import type {
   CallExpression,
   ClassDeclaration,

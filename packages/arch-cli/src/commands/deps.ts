@@ -1,4 +1,4 @@
-import { queryDependencies, resolveSymbolInput } from '@arch/graph'
+import { queryDependencies, resolveSymbolInput } from '@archkit/graph'
 import { formatDepsResult } from '../formatters/deps'
 import type { DepsCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'

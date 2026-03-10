@@ -1,10 +1,10 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 import {
   querySymbols,
   readPersistedEdges,
   readPersistedNodes,
   resolveSymbolInput,
-} from '@arch/graph'
+} from '@archkit/graph'
 import type {
   CompileContextOptions,
   ContextBundle,

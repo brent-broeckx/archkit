@@ -1,4 +1,4 @@
-import type { ArchNode } from '@arch/core'
+import type { ArchNode } from '@archkit/core'
 
 export function createSymbolsIndex(nodes: ArchNode[]): Record<string, string[]> {
   const symbolMap = new Map<string, string[]>()

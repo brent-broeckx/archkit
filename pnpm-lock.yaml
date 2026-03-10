@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@arch/cli':
+      '@archkit/cli':
         specifier: workspace:*
         version: link:packages/arch-cli
     devDependencies:
@@ -33,16 +33,16 @@ importers:
 
   packages/arch-cli:
     dependencies:
-      '@arch/context':
+      '@archkit/context':
         specifier: workspace:*
         version: link:../arch-context
-      '@arch/core':
+      '@archkit/core':
         specifier: workspace:*
         version: link:../arch-core
-      '@arch/graph':
+      '@archkit/graph':
         specifier: workspace:*
         version: link:../arch-graph
-      '@arch/parser-ts':
+      '@archkit/parser-ts':
         specifier: workspace:*
         version: link:../arch-parser-ts
       commander:
@@ -51,10 +51,10 @@ importers:
 
   packages/arch-context:
     dependencies:
-      '@arch/core':
+      '@archkit/core':
         specifier: workspace:*
         version: link:../arch-core
-      '@arch/graph':
+      '@archkit/graph':
         specifier: workspace:*
         version: link:../arch-graph
 
@@ -62,13 +62,13 @@ importers:
 
   packages/arch-graph:
     dependencies:
-      '@arch/core':
+      '@archkit/core':
         specifier: workspace:*
         version: link:../arch-core
 
   packages/arch-parser-ts:
     dependencies:
-      '@arch/core':
+      '@archkit/core':
         specifier: workspace:*
         version: link:../arch-core
       ts-morph:

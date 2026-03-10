@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { ArchNode } from '@arch/core'
+import type { ArchNode } from '@archkit/core'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createTempDir, removeTempDir } from '../../test-utils/temp-dir'
 import { readPersistedEdges, readPersistedNodes, readPersistedSymbolsIndex } from '../src/services/persisted-read'

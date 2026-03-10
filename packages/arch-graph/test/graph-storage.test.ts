@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { GraphData } from '@arch/core'
+import type { GraphData } from '@archkit/core'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createTempDir, removeTempDir } from '../../test-utils/temp-dir'
 import { persistGraph, readGraphMeta } from '../src/services/graph-storage'

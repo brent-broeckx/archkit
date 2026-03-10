@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 import { describe, expect, it } from 'vitest'
 import { addEdge, addNode, createParseState } from '../src/services/parse-state'
 

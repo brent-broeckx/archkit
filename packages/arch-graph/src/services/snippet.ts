@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { ArchNode } from '@arch/core'
+import type { ArchNode } from '@archkit/core'
 
 export async function extractSnippetForNode(
   rootDir: string,

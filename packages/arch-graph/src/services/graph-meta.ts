@@ -1,4 +1,4 @@
-import type { GraphData, GraphMeta, NodeType } from '@arch/core'
+import type { GraphData, GraphMeta, NodeType } from '@archkit/core'
 
 export function createGraphMeta(graphData: GraphData): GraphMeta {
   const nodeTypeCounts: Record<NodeType, number> = {
@@ -28,3 +28,5 @@ export function createGraphMeta(graphData: GraphData): GraphMeta {
     nodeTypeCounts,
   }
 }
+
+

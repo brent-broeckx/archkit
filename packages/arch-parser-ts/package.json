@@ -1,5 +1,5 @@
 {
-  "name": "@arch/parser-ts",
+  "name": "@archkit/parser-ts",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
@@ -33,7 +33,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@arch/core": "workspace:*",
+    "@archkit/core": "workspace:*",
     "ts-morph": "^24.0.0"
   }
 }

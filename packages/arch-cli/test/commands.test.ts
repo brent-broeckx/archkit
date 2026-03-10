@@ -1,13 +1,13 @@
-import type { ArchNode, GraphData, GraphMeta } from '@arch/core'
+import type { ArchNode, GraphData, GraphMeta } from '@archkit/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeBuildCommand } from '../src/commands/build'
 import { executeContextCommand } from '../src/commands/context'
 import { executeDepsCommand } from '../src/commands/deps'
 import {
-  executeKnowledgeAddCommand,
-  executeKnowledgeListCommand,
-  executeKnowledgeSearchCommand,
-  executeKnowledgeShowCommand,
+  executeKnowledgeAddCommand, 
+  executeKnowledgeListCommand, 
+  executeKnowledgeSearchCommand, 
+  executeKnowledgeShowCommand, 
 } from '../src/commands/knowledge'
 import { executeQueryCommand } from '../src/commands/query'
 import { executeShowCommand } from '../src/commands/show'
@@ -44,7 +44,7 @@ const {
   mockCompileContext: vi.fn(),
 }))
 
-vi.mock('@arch/graph', () => ({
+vi.mock('@archkit/graph', () => ({
   KNOWLEDGE_TYPES: ['decision', 'workaround', 'caveat', 'note', 'migration'],
   persistGraph: mockPersistGraph,
   readGraphMeta: mockReadGraphMeta,
@@ -59,13 +59,13 @@ vi.mock('@arch/graph', () => ({
   searchKnowledgeEntries: mockSearchKnowledgeEntries,
 }))
 
-vi.mock('@arch/parser-ts', () => ({
+vi.mock('@archkit/parser-ts', () => ({
   TypeScriptParser: vi.fn().mockImplementation(() => ({
     parseRepository: mockParseRepository,
   })),
 }))
 
-vi.mock('@arch/context', () => ({
+vi.mock('@archkit/context', () => ({
   ContextCompiler: vi.fn().mockImplementation(() => ({
     compile: mockCompileContext,
   })),

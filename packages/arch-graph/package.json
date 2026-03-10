@@ -1,5 +1,5 @@
 {
-  "name": "@arch/graph",
+  "name": "@archkit/graph",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
@@ -33,6 +33,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@arch/core": "workspace:*"
+    "@archkit/core": "workspace:*"
   }
 }

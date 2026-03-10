@@ -1,6 +1,6 @@
-import type { ContextBundle } from '@arch/context'
-import type { ArchNode, GraphMeta, NodeType } from '@arch/core'
-import type { DepsResult, KnowledgeEntry, KnowledgeEntrySummary } from '@arch/graph'
+import type { ContextBundle } from '@archkit/context'
+import type { ArchNode, GraphMeta, NodeType } from '@archkit/core'
+import type { DepsResult, KnowledgeEntry, KnowledgeEntrySummary } from '@archkit/graph'
 
 export interface BuildCommandResult {
   repoPath: string

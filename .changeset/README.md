@@ -19,4 +19,4 @@ Commit the generated file in .changeset/ with your pull request.
 
 ## Required secret
 
-Set NPM_TOKEN in GitHub repository secrets with publish access to the @arch scope.
+Set NPM_TOKEN in GitHub repository secrets with publish access to the @archkit scope.

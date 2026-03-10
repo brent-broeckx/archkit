@@ -17,7 +17,7 @@
     "release": "changeset publish"
   },
   "dependencies": {
-    "@arch/cli": "workspace:*"
+    "@archkit/cli": "workspace:*"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.6",

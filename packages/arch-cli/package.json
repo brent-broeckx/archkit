@@ -1,5 +1,5 @@
 {
-  "name": "@arch/cli",
+  "name": "@archkit/cli",
   "version": "0.1.0",
   "license": "MIT",
   "repository": {
@@ -36,10 +36,10 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@arch/context": "workspace:*",
-    "@arch/core": "workspace:*",
-    "@arch/graph": "workspace:*",
-    "@arch/parser-ts": "workspace:*",
+    "@archkit/context": "workspace:*",
+    "@archkit/core": "workspace:*",
+    "@archkit/graph": "workspace:*",
+    "@archkit/parser-ts": "workspace:*",
     "commander": "^13.1.0"
   }
 }

@@ -1,4 +1,4 @@
-import { ContextCompiler } from '@arch/context'
+import { ContextCompiler } from '@archkit/context'
 import { formatContextResult } from '../formatters/context'
 import type { ContextCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'

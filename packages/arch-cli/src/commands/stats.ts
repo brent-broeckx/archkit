@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { readGraphMeta } from '@arch/graph'
+import { readGraphMeta } from '@archkit/graph'
 import { formatStatsResult } from '../formatters/stats'
 import type { StatsCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'

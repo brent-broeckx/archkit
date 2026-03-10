@@ -6,11 +6,11 @@ const root = path.resolve(__dirname)
 export default defineConfig({
   resolve: {
     alias: {
-      '@arch/core': path.join(root, 'packages/arch-core/src/index.ts'),
-      '@arch/graph': path.join(root, 'packages/arch-graph/src/index.ts'),
-      '@arch/parser-ts': path.join(root, 'packages/arch-parser-ts/src/index.ts'),
-      '@arch/context': path.join(root, 'packages/arch-context/src/index.ts'),
-      '@arch/cli': path.join(root, 'packages/arch-cli/src/index.ts'),
+      '@archkit/core': path.join(root, 'packages/arch-core/src/index.ts'),
+      '@archkit/graph': path.join(root, 'packages/arch-graph/src/index.ts'),
+      '@archkit/parser-ts': path.join(root, 'packages/arch-parser-ts/src/index.ts'),
+      '@archkit/context': path.join(root, 'packages/arch-context/src/index.ts'),
+      '@archkit/cli': path.join(root, 'packages/arch-cli/src/index.ts'),
     },
   },
   test: {

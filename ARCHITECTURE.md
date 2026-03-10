@@ -111,18 +111,18 @@ Generated data is persisted under `.arch`:
 
 ## 3) Package Responsibilities
 
-- `@arch/core`
   - shared schemas and core types (`ArchNode`, `ArchEdge`, `SourceLoc`)
-- `@arch/parser-ts`
   - `ts-morph` project loading
   - TypeScript/JavaScript file discovery scaffolding
   - extraction scaffolding for symbols and dependency relationships
-- `@arch/graph`
   - graph storage, indexing, and traversal helpers
-- `@arch/context`
   - context bundle assembly and formatting scaffold
-- `@arch/cli`
   - command surface for `build`, `stats`, `query`, `deps`, `show`, `context`
+ `@archkit/core`
+ `@archkit/parser-ts`
+ `@archkit/graph`
+ `@archkit/context`
+ `@archkit/cli`
 
 ## 4) Data Flow
 

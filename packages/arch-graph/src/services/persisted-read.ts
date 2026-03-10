@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 
 function parseJsonl<T>(content: string): T[] {
   return content

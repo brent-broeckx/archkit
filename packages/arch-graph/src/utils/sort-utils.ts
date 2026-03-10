@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 
 export function sortNodes(nodes: ArchNode[]): ArchNode[] {
   return [...nodes].sort((left, right) => left.id.localeCompare(right.id))

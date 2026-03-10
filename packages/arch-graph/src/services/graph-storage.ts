@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import type { GraphData, GraphMeta } from '@arch/core'
+import type { GraphData, GraphMeta } from '@archkit/core'
 import type { PersistGraphResult } from '../models/persist-types'
 import { toJsonl } from '../utils/jsonl'
 import { sortEdges, sortNodes } from '../utils/sort-utils'

@@ -1,4 +1,4 @@
-import { extractSnippetForNode, resolveSymbolInput } from '@arch/graph'
+import { extractSnippetForNode, resolveSymbolInput } from '@archkit/graph'
 import { formatShowResult } from '../formatters/show'
 import type { ShowCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'

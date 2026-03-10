@@ -5,7 +5,7 @@ import {
   listKnowledgeEntries,
   searchKnowledgeEntries,
   type KnowledgeType,
-} from '@arch/graph'
+} from '@archkit/graph'
 import { formatKnowledgeResult } from '../formatters/knowledge'
 import type {
   KnowledgeAddCommandResult,

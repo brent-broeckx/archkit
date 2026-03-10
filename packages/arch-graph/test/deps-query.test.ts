@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { queryDependencies } from '../src/services/deps-query'
 

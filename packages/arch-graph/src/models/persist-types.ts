@@ -1,4 +1,4 @@
-import type { GraphMeta } from '@arch/core'
+import type { GraphMeta } from '@archkit/core'
 
 export interface PersistGraphResult {
   graphDir: string

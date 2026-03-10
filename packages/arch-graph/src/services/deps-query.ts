@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 import type { DepsResult } from '../models/deps-types'
 import { readPersistedEdges, readPersistedNodes } from './persisted-read'
 

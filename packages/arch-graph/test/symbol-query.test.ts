@@ -1,4 +1,4 @@
-import type { ArchNode } from '@arch/core'
+import type { ArchNode } from '@archkit/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { querySymbols, resolveSymbolInput } from '../src/services/symbol-query'
 

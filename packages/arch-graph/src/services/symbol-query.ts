@@ -1,4 +1,4 @@
-import type { ArchNode } from '@arch/core'
+import type { ArchNode } from '@archkit/core'
 import type { ResolvedSymbol, SymbolQueryResult } from '../models/query-types'
 import { readPersistedNodes, readPersistedSymbolsIndex } from './persisted-read'
 

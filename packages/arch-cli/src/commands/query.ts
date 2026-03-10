@@ -1,4 +1,4 @@
-import { querySymbols, readPersistedNodes } from '@arch/graph'
+import { querySymbols, readPersistedNodes } from '@archkit/graph'
 import { formatQueryResult } from '../formatters/query'
 import type { QueryCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'

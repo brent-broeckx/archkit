@@ -4,11 +4,11 @@
   "commit": false,
   "fixed": [
     [
-      "@arch/core",
-      "@arch/graph",
-      "@arch/parser-ts",
-      "@arch/context",
-      "@arch/cli"
+      "@archkit/core",
+      "@archkit/graph",
+      "@archkit/parser-ts",
+      "@archkit/context",
+      "@archkit/cli"
     ]
   ],
   "access": "public",

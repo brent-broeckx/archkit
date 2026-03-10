@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 import type { ParseState } from '../models/parser-types'
 
 export function createParseState(rootDir: string, discoveredFiles: string[]): ParseState {

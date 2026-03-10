@@ -1,4 +1,4 @@
-import type { ArchNode, GraphMeta } from '@arch/core'
+import type { ArchNode, GraphMeta } from '@archkit/core'
 import { describe, expect, it } from 'vitest'
 import { formatBuildResult } from '../src/formatters/build'
 import { formatContextResult } from '../src/formatters/context'

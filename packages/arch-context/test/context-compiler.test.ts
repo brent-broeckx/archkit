@@ -1,4 +1,4 @@
-import type { ArchEdge, ArchNode } from '@arch/core'
+import type { ArchEdge, ArchNode } from '@archkit/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ContextCompiler } from '../src/services/context-compiler'
 
@@ -9,7 +9,7 @@ const { mockReadPersistedNodes, mockReadPersistedEdges, mockResolveSymbolInput, 
   mockQuerySymbols: vi.fn(),
 }))
 
-vi.mock('@arch/graph', () => ({
+vi.mock('@archkit/graph', () => ({
   readPersistedNodes: mockReadPersistedNodes,
   readPersistedEdges: mockReadPersistedEdges,
   resolveSymbolInput: mockResolveSymbolInput,
