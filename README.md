@@ -103,7 +103,7 @@ Testing strategy highlights:
 
 - deterministic assertions only (stable sorting, normalized paths, fixed fixture data)
 - core service coverage across parser, graph persistence/querying, and context compilation
-- command coverage for `build`, `stats`, `query`, `deps`, `show`, `context`, and `knowledge` flows
+- command coverage for `build`, `stats`, `query`, `deps`, `show`, `context`, `feature(s)`, and `knowledge` flows
 - CLI wiring coverage through `program` command routing tests
 - filesystem-backed integration fixtures for `.arch` graph and knowledge storage behavior
 
@@ -115,6 +115,11 @@ Testing strategy highlights:
 - `arch deps` (implemented)
 - `arch show` (implemented)
 - `arch context` (implemented)
+- `arch features` (implemented)
+- `arch features suggest` (implemented)
+- `arch feature <name>` (implemented)
+- `arch feature assign <feature> <pattern>` (implemented)
+- `arch feature unmapped` (implemented)
 - `arch knowledge add|list|show|search` (implemented)
 
 ### `arch build`
@@ -220,6 +225,11 @@ Current limitations / notes:
 
 Compiles deterministic context bundles for a free-text query or symbol-like input.
 
+Resolution order:
+
+1. If the query exactly matches a configured feature name in `.arch/features.json` (case-insensitive), context is seeded from that feature mapping.
+2. Otherwise, Arch falls back to existing symbol/query resolution behavior.
+
 Examples:
 
 ```bash
@@ -228,6 +238,7 @@ pnpm arch context TypeScriptParser.parseRepository
 pnpm arch context method:packages/arch-parser-ts/src/services/type-script-parser.ts#TypeScriptParser.parseRepository
 pnpm arch context parser --json
 pnpm arch context parser --format llm
+pnpm arch context command --no-limits
 ```
 
 Current limitations / notes:
@@ -235,6 +246,123 @@ Current limitations / notes:
 - graph expansion is bounded (depth 3) and deterministic
 - context budgets are enforced: max snippets `20`, max files `12`, max lines `1200`
 - query scoring is deterministic but intentionally lightweight in MVP
+- use `--no-limits` to disable context output limits and return all matched artifacts
+
+### `arch features`
+
+Lists configured features from `.arch/features.json` and matched file counts.
+
+Examples:
+
+```bash
+pnpm arch features
+pnpm arch features --json
+```
+
+Current limitations / notes:
+
+- source of truth is `.arch/features.json`
+- file counts are based on persisted files index from a prior `arch build`
+- `--format llm` is not supported for this command
+
+### `arch features suggest`
+
+Suggests likely feature mappings from repository file structure. Suggestions are helper-only and do not mutate config.
+
+Examples:
+
+```bash
+pnpm arch features suggest
+pnpm arch features suggest --json
+```
+
+Current limitations / notes:
+
+- suggestions are conservative and deterministic
+- suggestions are not authoritative mappings
+- requires `.arch` data from a prior `arch build`
+- `--format llm` is not supported for this command
+
+### `arch feature <name>`
+
+Shows patterns and matched files for one configured feature.
+
+Examples:
+
+```bash
+pnpm arch feature authentication
+pnpm arch feature authentication --json
+```
+
+Current limitations / notes:
+
+- feature lookup is case-insensitive and normalized internally
+- returns only configured feature details (not inferred features)
+- requires `.arch` file index from a prior `arch build` for matched files
+- `--format llm` is not supported for this command
+
+### `arch feature assign <feature> <pattern>`
+
+Adds or updates feature mappings in `.arch/features.json`.
+
+Examples:
+
+```bash
+pnpm arch feature assign authentication src/app/features/auth/**
+pnpm arch feature assign billing packages/billing/**
+pnpm arch feature assign authentication src/app/features/auth/** --json
+```
+
+Current limitations / notes:
+
+- creates `.arch/features.json` if missing
+- feature keys are normalized to lowercase slug form
+- duplicate patterns are detected and not duplicated
+- writes deterministic, stable JSON ordering
+- `--format llm` is not supported for this command
+
+### `arch feature unmapped`
+
+Lists source files known to Arch that do not match any configured feature pattern.
+
+Examples:
+
+```bash
+pnpm arch feature unmapped
+pnpm arch feature unmapped --json
+```
+
+Current limitations / notes:
+
+- reports files only (not symbols)
+- requires `.arch` data from a prior `arch build`
+- `--format llm` is not supported for this command
+
+### Feature mapping config (`.arch/features.json`)
+
+Feature mappings are explicit and user-defined.
+
+Example:
+
+```json
+{
+	"authentication": [
+		"src/app/features/auth/**",
+		"libs/auth/**"
+	],
+	"billing": [
+		"src/app/features/billing/**",
+		"packages/billing/**"
+	]
+}
+```
+
+Rules:
+
+- top-level keys are feature names
+- values are arrays of repository-relative path patterns
+- matching is deterministic and local-only
+- overlapping matches are allowed (a file can belong to multiple features)
 
 ### `arch knowledge`
 
@@ -278,7 +406,7 @@ Flag behavior:
 - `--json` takes precedence over `--format`
 - supported `--format` values are `human` and `llm`
 - `llm` format is currently available for `query`, `deps`, `show`, and `context`
-- `llm` format is not supported for `build` and `stats`
+- `llm` format is not supported for `build`, `stats`, `features`, and `feature` commands
 
 JSON error shape:
 

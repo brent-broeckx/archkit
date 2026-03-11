@@ -5,8 +5,14 @@ export interface ContextSnippet {
   endLine: number
 }
 
+export interface ContextResolution {
+  kind: 'feature' | 'query'
+  feature?: string
+}
+
 export interface ContextBundle {
   query: string
+  resolution: ContextResolution
   entrypoints: string[]
   files: string[]
   paths: string[][]
@@ -15,6 +21,7 @@ export interface ContextBundle {
 
 export interface CompileContextOptions {
   query: string
+  limits?: boolean
 }
 
 export interface RankedNode {

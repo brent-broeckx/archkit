@@ -3,7 +3,12 @@ import path from 'node:path'
 import type { ArchNode } from '@archkit/core'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createTempDir, removeTempDir } from '../../test-utils/temp-dir'
-import { readPersistedEdges, readPersistedNodes, readPersistedSymbolsIndex } from '../src/services/persisted-read'
+import {
+  readPersistedEdges,
+  readPersistedFilesIndex,
+  readPersistedNodes,
+  readPersistedSymbolsIndex,
+} from '../src/services/persisted-read'
 import { extractSnippetForNode } from '../src/services/snippet'
 
 describe('snippet + persisted-read', () => {
@@ -35,12 +40,18 @@ describe('snippet + persisted-read', () => {
       '{"run":["function:src/a.ts#run"]}',
       'utf-8',
     )
+    await writeFile(
+      path.join(rootDir, '.arch', 'index', 'files.json'),
+      '["src/a.ts"]',
+      'utf-8',
+    )
 
     await expect(readPersistedNodes(rootDir)).resolves.toHaveLength(1)
     await expect(readPersistedEdges(rootDir)).resolves.toHaveLength(1)
     await expect(readPersistedSymbolsIndex(rootDir)).resolves.toEqual({
       run: ['function:src/a.ts#run'],
     })
+    await expect(readPersistedFilesIndex(rootDir)).resolves.toEqual(['src/a.ts'])
   })
 
   it('extracts source snippet by node line range', async () => {

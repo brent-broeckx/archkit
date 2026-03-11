@@ -1,7 +1,14 @@
 import { Command } from 'commander'
 import { runBuildCommand } from './commands/build'
-import { runContextCommand } from './commands/context'
+import { runContextCommand, type ContextOutputOptions } from './commands/context'
 import { runDepsCommand } from './commands/deps'
+import {
+  runFeatureAssignCommand,
+  runFeatureShowCommand,
+  runFeatureUnmappedCommand,
+  runFeaturesListCommand,
+  runFeaturesSuggestCommand,
+} from './commands/feature'
 import {
   type KnowledgeAddOptions,
   runKnowledgeAddCommand,
@@ -80,10 +87,60 @@ export function buildProgram(): Command {
     .command('context')
     .description('Compile context for a feature or symbol')
     .argument('[query]', 'Context query')
+    .option('--no-limits', 'Disable context limits and return full matched context')
     .option('--json', 'Output JSON')
     .option('--format <format>', 'Output format (human|llm)', 'human')
-    .action(async (query: string | undefined, outputOptions: OutputOptions) => {
+    .action(async (query: string | undefined, outputOptions: ContextOutputOptions) => {
+      console.log('Running context command with options:', { query, ...outputOptions })
       await runContextCommand(query, outputOptions)
+    })
+
+  const featuresCommand = program
+    .command('features')
+    .description('List configured features')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (outputOptions: OutputOptions) => {
+      await runFeaturesListCommand(outputOptions)
+    })
+
+  featuresCommand
+    .command('suggest')
+    .description('Suggest feature mappings from known repository files')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (outputOptions: OutputOptions) => {
+      await runFeaturesSuggestCommand(outputOptions)
+    })
+
+  const featureCommand = program
+    .command('feature')
+    .description('Inspect and manage feature mappings')
+    .argument('[name]', 'Feature name')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (name: string | undefined, outputOptions: OutputOptions) => {
+      await runFeatureShowCommand(name, outputOptions)
+    })
+
+  featureCommand
+    .command('assign')
+    .description('Assign a feature mapping pattern')
+    .argument('<feature>', 'Feature name')
+    .argument('<pattern>', 'Repository-relative glob pattern')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (feature: string, pattern: string, outputOptions: OutputOptions) => {
+      await runFeatureAssignCommand(feature, pattern, outputOptions)
+    })
+
+  featureCommand
+    .command('unmapped')
+    .description('List source files not mapped to any configured feature')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (outputOptions: OutputOptions) => {
+      await runFeatureUnmappedCommand(outputOptions)
     })
 
   const knowledgeCommand = program

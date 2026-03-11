@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { formatBuildResult } from '../src/formatters/build'
 import { formatContextResult } from '../src/formatters/context'
 import { formatDepsResult } from '../src/formatters/deps'
+import { formatFeatureResult } from '../src/formatters/feature'
 import { formatKnowledgeResult } from '../src/formatters/knowledge'
 import { formatQueryResult } from '../src/formatters/query'
 import { formatShowResult } from '../src/formatters/show'
@@ -50,6 +51,7 @@ describe('cli formatters', () => {
     }
     const contextResult = {
       query: 'auth',
+      resolution: { kind: 'feature' as const, feature: 'authentication' },
       entrypoints: ['Auth.login'],
       files: ['src/a.ts'],
       paths: [['Auth.login', 'generateToken']],
@@ -61,7 +63,9 @@ describe('cli formatters', () => {
     expect(formatDepsResult(depsResult, 'human')).toContain('Imports')
     expect(formatDepsResult(depsResult, 'llm')).toContain('## Calls')
     expect(formatContextResult(contextResult, 'human')).toContain('Entrypoints')
+    expect(formatContextResult(contextResult, 'human')).toContain('feature: authentication')
     expect(formatContextResult(contextResult, 'llm')).toContain('## Flow')
+    expect(formatContextResult(contextResult, 'llm')).toContain('## Resolution')
   })
 
   it('formats show output with proper fence language and handles empty snippets', () => {
@@ -129,5 +133,131 @@ describe('cli formatters', () => {
     expect(list).toContain('- none')
     expect(show).toContain('## Notes')
     expect(search).toContain('(none)')
+  })
+
+  it('formats feature command results across actions', () => {
+    const listHuman = formatFeatureResult(
+      {
+        action: 'list',
+        hasConfig: true,
+        configPath: '.arch/features.json',
+        features: [{ feature: 'authentication', patterns: ['src/auth/**'], fileCount: 2 }],
+      },
+      'human',
+    )
+    const suggestJson = formatFeatureResult(
+      {
+        action: 'suggest',
+        suggestions: [{ feature: 'auth', patterns: ['src/features/auth/**'], fileCount: 3 }],
+      },
+      'json',
+    )
+    const showLlm = formatFeatureResult(
+      {
+        action: 'show',
+        hasConfig: true,
+        configPath: '.arch/features.json',
+        feature: {
+          feature: 'authentication',
+          patterns: ['src/auth/**'],
+          files: ['src/auth/service.ts'],
+        },
+      },
+      'llm',
+    )
+    const unmappedHuman = formatFeatureResult(
+      {
+        action: 'unmapped',
+        hasConfig: true,
+        configPath: '.arch/features.json',
+        unmappedFiles: ['src/shared/date.ts'],
+      },
+      'human',
+    )
+    const listLlmNoConfig = formatFeatureResult(
+      {
+        action: 'list',
+        hasConfig: false,
+        configPath: '.arch/features.json',
+        features: [],
+      },
+      'llm',
+    )
+    const suggestHumanEmpty = formatFeatureResult(
+      {
+        action: 'suggest',
+        suggestions: [],
+      },
+      'human',
+    )
+    const assignLlm = formatFeatureResult(
+      {
+        action: 'assign',
+        assignment: {
+          configPath: '.arch/features.json',
+          feature: 'billing',
+          pattern: 'packages/billing/**',
+          patterns: ['packages/billing/**'],
+          created: false,
+          duplicate: true,
+        },
+      },
+      'llm',
+    )
+    const unmappedLlm = formatFeatureResult(
+      {
+        action: 'unmapped',
+        hasConfig: true,
+        configPath: '.arch/features.json',
+        unmappedFiles: [],
+      },
+      'llm',
+    )
+    const suggestHumanFilled = formatFeatureResult(
+      {
+        action: 'suggest',
+        suggestions: [{ feature: 'orders', patterns: ['libs/orders/**'], fileCount: 4 }],
+      },
+      'human',
+    )
+    const showHuman = formatFeatureResult(
+      {
+        action: 'show',
+        hasConfig: true,
+        configPath: '.arch/features.json',
+        feature: {
+          feature: 'orders',
+          patterns: [],
+          files: [],
+        },
+      },
+      'human',
+    )
+    const assignHuman = formatFeatureResult(
+      {
+        action: 'assign',
+        assignment: {
+          configPath: '.arch/features.json',
+          feature: 'orders',
+          pattern: 'libs/orders/**',
+          patterns: ['libs/orders/**'],
+          created: true,
+          duplicate: false,
+        },
+      },
+      'human',
+    )
+
+    expect(listHuman).toContain('Configured features')
+    expect(suggestJson).toContain('"suggestions"')
+    expect(showLlm).toContain('## Files')
+    expect(unmappedHuman).toContain('Unmapped files')
+    expect(listLlmNoConfig).toContain('No `.arch/features.json` file found.')
+    expect(suggestHumanEmpty).toContain('(none)')
+    expect(assignLlm).toContain('duplicate: yes')
+    expect(unmappedLlm).toContain('- none')
+    expect(suggestHumanFilled).toContain('orders')
+    expect(showHuman).toContain('Patterns')
+    expect(assignHuman).toContain('Feature pattern assigned')
   })
 })

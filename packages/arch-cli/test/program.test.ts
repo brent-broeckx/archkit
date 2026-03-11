@@ -8,6 +8,11 @@ const {
   mockRunDeps,
   mockRunShow,
   mockRunContext,
+  mockRunFeatureAssign,
+  mockRunFeatureShow,
+  mockRunFeatureUnmapped,
+  mockRunFeaturesList,
+  mockRunFeaturesSuggest,
   mockRunKnowledgeAdd,
   mockRunKnowledgeList,
   mockRunKnowledgeShow,
@@ -20,6 +25,11 @@ const {
   mockRunDeps: vi.fn(),
   mockRunShow: vi.fn(),
   mockRunContext: vi.fn(),
+  mockRunFeatureAssign: vi.fn(),
+  mockRunFeatureShow: vi.fn(),
+  mockRunFeatureUnmapped: vi.fn(),
+  mockRunFeaturesList: vi.fn(),
+  mockRunFeaturesSuggest: vi.fn(),
   mockRunKnowledgeAdd: vi.fn(),
   mockRunKnowledgeList: vi.fn(),
   mockRunKnowledgeShow: vi.fn(),
@@ -33,6 +43,13 @@ vi.mock('../src/commands/query', () => ({ runQueryCommand: mockRunQuery }))
 vi.mock('../src/commands/deps', () => ({ runDepsCommand: mockRunDeps }))
 vi.mock('../src/commands/show', () => ({ runShowCommand: mockRunShow }))
 vi.mock('../src/commands/context', () => ({ runContextCommand: mockRunContext }))
+vi.mock('../src/commands/feature', () => ({
+  runFeatureAssignCommand: mockRunFeatureAssign,
+  runFeatureShowCommand: mockRunFeatureShow,
+  runFeatureUnmappedCommand: mockRunFeatureUnmapped,
+  runFeaturesListCommand: mockRunFeaturesList,
+  runFeaturesSuggestCommand: mockRunFeaturesSuggest,
+}))
 vi.mock('../src/commands/knowledge', () => ({
   runKnowledgeAddCommand: mockRunKnowledgeAdd,
   runKnowledgeListCommand: mockRunKnowledgeList,
@@ -56,6 +73,12 @@ describe('program', () => {
     await program.parseAsync(['node', 'arch', 'deps', 'Auth.login'])
     await program.parseAsync(['node', 'arch', 'show', 'Auth.login'])
     await program.parseAsync(['node', 'arch', 'context', 'auth'])
+    await program.parseAsync(['node', 'arch', 'context', 'auth', '--no-limits'])
+    await program.parseAsync(['node', 'arch', 'features'])
+    await program.parseAsync(['node', 'arch', 'features', 'suggest'])
+    await program.parseAsync(['node', 'arch', 'feature', 'authentication'])
+    await program.parseAsync(['node', 'arch', 'feature', 'assign', 'authentication', 'src/auth/**'])
+    await program.parseAsync(['node', 'arch', 'feature', 'unmapped'])
     await program.parseAsync([
       'node',
       'arch',
@@ -83,6 +106,12 @@ describe('program', () => {
     expect(mockRunDeps).toHaveBeenCalledWith('Auth.login', expect.any(Object))
     expect(mockRunShow).toHaveBeenCalledWith('Auth.login', expect.any(Object))
     expect(mockRunContext).toHaveBeenCalledWith('auth', expect.any(Object))
+    expect(mockRunContext).toHaveBeenCalledWith('auth', expect.objectContaining({ limits: true }))
+    expect(mockRunFeaturesList).toHaveBeenCalledTimes(1)
+    expect(mockRunFeaturesSuggest).toHaveBeenCalledTimes(1)
+    expect(mockRunFeatureShow).toHaveBeenCalledWith('authentication', expect.any(Object))
+    expect(mockRunFeatureAssign).toHaveBeenCalledWith('authentication', 'src/auth/**', expect.any(Object))
+    expect(mockRunFeatureUnmapped).toHaveBeenCalledTimes(1)
     expect(mockRunKnowledgeAdd).toHaveBeenCalledWith(expect.objectContaining({ type: 'note', title: 'T', body: 'B' }))
     expect(mockRunKnowledgeList).toHaveBeenCalledTimes(1)
     expect(mockRunKnowledgeShow).toHaveBeenCalledWith('id-1', expect.any(Object))

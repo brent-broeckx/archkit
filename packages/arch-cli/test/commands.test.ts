@@ -1,8 +1,21 @@
 import type { ArchNode, GraphData, GraphMeta } from '@archkit/core'
+import { FeatureMappingConfigError } from '@archkit/graph'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeBuildCommand } from '../src/commands/build'
 import { executeContextCommand } from '../src/commands/context'
 import { executeDepsCommand } from '../src/commands/deps'
+import {
+  executeFeatureAssignCommand,
+  executeFeatureShowCommand,
+  executeFeatureUnmappedCommand,
+  executeFeaturesListCommand,
+  executeFeaturesSuggestCommand,
+  runFeatureAssignCommand,
+  runFeatureShowCommand,
+  runFeatureUnmappedCommand,
+  runFeaturesListCommand,
+  runFeaturesSuggestCommand,
+} from '../src/commands/feature'
 import {
   executeKnowledgeAddCommand, 
   executeKnowledgeListCommand, 
@@ -26,6 +39,12 @@ const {
   mockListKnowledgeEntries,
   mockGetKnowledgeEntry,
   mockSearchKnowledgeEntries,
+  mockLoadFeatureMapping,
+  mockListFeatureSummaries,
+  mockSuggestFeatureMappings,
+  mockGetFeatureDetails,
+  mockAssignFeaturePattern,
+  mockListUnmappedFiles,
   mockParseRepository,
   mockCompileContext,
 } = vi.hoisted(() => ({
@@ -40,12 +59,19 @@ const {
   mockListKnowledgeEntries: vi.fn(),
   mockGetKnowledgeEntry: vi.fn(),
   mockSearchKnowledgeEntries: vi.fn(),
+  mockLoadFeatureMapping: vi.fn(),
+  mockListFeatureSummaries: vi.fn(),
+  mockSuggestFeatureMappings: vi.fn(),
+  mockGetFeatureDetails: vi.fn(),
+  mockAssignFeaturePattern: vi.fn(),
+  mockListUnmappedFiles: vi.fn(),
   mockParseRepository: vi.fn(),
   mockCompileContext: vi.fn(),
 }))
 
 vi.mock('@archkit/graph', () => ({
   KNOWLEDGE_TYPES: ['decision', 'workaround', 'caveat', 'note', 'migration'],
+  FeatureMappingConfigError: class FeatureMappingConfigError extends Error {},
   persistGraph: mockPersistGraph,
   readGraphMeta: mockReadGraphMeta,
   querySymbols: mockQuerySymbols,
@@ -53,6 +79,12 @@ vi.mock('@archkit/graph', () => ({
   resolveSymbolInput: mockResolveSymbolInput,
   queryDependencies: mockQueryDependencies,
   extractSnippetForNode: mockExtractSnippetForNode,
+  loadFeatureMapping: mockLoadFeatureMapping,
+  listFeatureSummaries: mockListFeatureSummaries,
+  suggestFeatureMappings: mockSuggestFeatureMappings,
+  getFeatureDetails: mockGetFeatureDetails,
+  assignFeaturePattern: mockAssignFeaturePattern,
+  listUnmappedFiles: mockListUnmappedFiles,
   addKnowledgeEntry: mockAddKnowledgeEntry,
   listKnowledgeEntries: mockListKnowledgeEntries,
   getKnowledgeEntry: mockGetKnowledgeEntry,
@@ -196,6 +228,7 @@ describe('cli execute commands', () => {
   it('executes context command and maps compiler errors', async () => {
     mockCompileContext.mockResolvedValue({
       query: 'auth',
+      resolution: { kind: 'query' },
       entrypoints: ['Auth.login'],
       files: ['src/a.ts'],
       paths: [['Auth.login']],
@@ -203,6 +236,9 @@ describe('cli execute commands', () => {
     })
 
     await expect(executeContextCommand(' auth ', '/repo')).resolves.toMatchObject({ query: 'auth' })
+    expect(mockCompileContext).toHaveBeenCalledWith('/repo', { query: 'auth', limits: false })
+    await expect(executeContextCommand(' auth ', '/repo', true)).resolves.toMatchObject({ query: 'auth' })
+    expect(mockCompileContext).toHaveBeenCalledWith('/repo', { query: 'auth', limits: true })
     await expect(executeContextCommand(' ', '/repo')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
 
     mockCompileContext.mockRejectedValueOnce(new Error('missing'))
@@ -275,5 +311,140 @@ describe('cli execute commands', () => {
     mockResolveSymbolInput.mockRejectedValueOnce(cliError)
 
     await expect(executeShowCommand('x', '/repo')).rejects.toBe(cliError)
+  })
+
+  it('executes feature list/suggest/show/assign/unmapped flows and errors', async () => {
+    mockLoadFeatureMapping.mockResolvedValue({
+      hasConfig: true,
+      configPath: '.arch/features.json',
+      features: { authentication: ['src/auth/**'] },
+    })
+    mockListFeatureSummaries.mockResolvedValue([
+      { feature: 'authentication', patterns: ['src/auth/**'], fileCount: 2 },
+    ])
+
+    await expect(executeFeaturesListCommand('/repo')).resolves.toEqual({
+      action: 'list',
+      hasConfig: true,
+      configPath: '.arch/features.json',
+      features: [{ feature: 'authentication', patterns: ['src/auth/**'], fileCount: 2 }],
+    })
+
+    mockSuggestFeatureMappings.mockResolvedValue({
+      suggestions: [{ feature: 'auth', patterns: ['src/features/auth/**'], fileCount: 3 }],
+    })
+
+    await expect(executeFeaturesSuggestCommand('/repo')).resolves.toEqual({
+      action: 'suggest',
+      suggestions: [{ feature: 'auth', patterns: ['src/features/auth/**'], fileCount: 3 }],
+    })
+
+    mockGetFeatureDetails.mockResolvedValue({
+      feature: 'authentication',
+      patterns: ['src/auth/**'],
+      files: ['src/auth/service.ts'],
+    })
+
+    await expect(executeFeatureShowCommand(' authentication ', '/repo')).resolves.toEqual({
+      action: 'show',
+      hasConfig: true,
+      configPath: '.arch/features.json',
+      feature: {
+        feature: 'authentication',
+        patterns: ['src/auth/**'],
+        files: ['src/auth/service.ts'],
+      },
+    })
+
+    mockAssignFeaturePattern.mockResolvedValue({
+      configPath: '.arch/features.json',
+      feature: 'authentication',
+      pattern: 'src/auth/**',
+      patterns: ['src/auth/**'],
+      created: true,
+      duplicate: false,
+    })
+
+    await expect(executeFeatureAssignCommand('authentication', 'src/auth/**', '/repo')).resolves.toEqual({
+      action: 'assign',
+      assignment: {
+        configPath: '.arch/features.json',
+        feature: 'authentication',
+        pattern: 'src/auth/**',
+        patterns: ['src/auth/**'],
+        created: true,
+        duplicate: false,
+      },
+    })
+
+    mockListUnmappedFiles.mockResolvedValue({ unmappedFiles: ['src/shared/date.ts'] })
+    await expect(executeFeatureUnmappedCommand('/repo')).resolves.toEqual({
+      action: 'unmapped',
+      hasConfig: true,
+      configPath: '.arch/features.json',
+      unmappedFiles: ['src/shared/date.ts'],
+    })
+
+    await expect(executeFeatureShowCommand(' ', '/repo')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
+    mockGetFeatureDetails.mockResolvedValueOnce(undefined)
+    await expect(executeFeatureShowCommand('unknown', '/repo')).rejects.toMatchObject({ code: 'FEATURE_NOT_FOUND' })
+    await expect(executeFeatureAssignCommand(' ', 'src/auth/**', '/repo')).rejects.toMatchObject({
+      code: 'INVALID_INPUT',
+    })
+
+    mockListFeatureSummaries.mockRejectedValueOnce(new Error('boom'))
+    await expect(executeFeaturesListCommand('/repo')).rejects.toMatchObject({ code: 'COMMAND_FAILED' })
+
+    mockSuggestFeatureMappings.mockRejectedValueOnce({ code: 'ENOENT' })
+    await expect(executeFeaturesSuggestCommand('/repo')).rejects.toMatchObject({ code: 'GRAPH_NOT_FOUND' })
+
+    mockGetFeatureDetails.mockRejectedValueOnce(new Error('boom'))
+    await expect(executeFeatureShowCommand('authentication', '/repo')).rejects.toMatchObject({
+      code: 'COMMAND_FAILED',
+    })
+
+    mockAssignFeaturePattern.mockRejectedValueOnce(
+      new FeatureMappingConfigError('Feature pattern must be a non-empty path pattern.'),
+    )
+    await expect(executeFeatureAssignCommand('authentication', 'x', '/repo')).rejects.toMatchObject({
+      code: 'INVALID_INPUT',
+    })
+
+    mockListUnmappedFiles.mockRejectedValueOnce({ code: 'ENOENT' })
+    await expect(executeFeatureUnmappedCommand('/repo')).rejects.toMatchObject({ code: 'GRAPH_NOT_FOUND' })
+  })
+
+  it('runs feature command wrappers with output options', async () => {
+    mockLoadFeatureMapping.mockResolvedValue({
+      hasConfig: true,
+      configPath: '.arch/features.json',
+      features: { authentication: ['src/auth/**'] },
+    })
+    mockListFeatureSummaries.mockResolvedValue([
+      { feature: 'authentication', patterns: ['src/auth/**'], fileCount: 1 },
+    ])
+    mockSuggestFeatureMappings.mockResolvedValue({
+      suggestions: [{ feature: 'auth', patterns: ['src/features/auth/**'], fileCount: 1 }],
+    })
+    mockGetFeatureDetails.mockResolvedValue({
+      feature: 'authentication',
+      patterns: ['src/auth/**'],
+      files: ['src/auth/a.ts'],
+    })
+    mockAssignFeaturePattern.mockResolvedValue({
+      configPath: '.arch/features.json',
+      feature: 'authentication',
+      pattern: 'src/auth/**',
+      patterns: ['src/auth/**'],
+      created: false,
+      duplicate: false,
+    })
+    mockListUnmappedFiles.mockResolvedValue({ unmappedFiles: [] })
+
+    await runFeaturesListCommand({ json: true })
+    await runFeaturesSuggestCommand({ json: true })
+    await runFeatureShowCommand('authentication', { json: true })
+    await runFeatureAssignCommand('authentication', 'src/auth/**', { json: true })
+    await runFeatureUnmappedCommand({ json: true })
   })
 })

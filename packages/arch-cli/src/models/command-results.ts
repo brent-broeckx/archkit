@@ -1,6 +1,14 @@
 import type { ContextBundle } from '@archkit/context'
 import type { ArchNode, GraphMeta, NodeType } from '@archkit/core'
-import type { DepsResult, KnowledgeEntry, KnowledgeEntrySummary } from '@archkit/graph'
+import type {
+  DepsResult,
+  FeatureAssignResult,
+  FeatureDetails,
+  FeatureSuggestion,
+  FeatureSummary,
+  KnowledgeEntry,
+  KnowledgeEntrySummary,
+} from '@archkit/graph'
 
 export interface BuildCommandResult {
   repoPath: string
@@ -50,6 +58,44 @@ export interface KnowledgeSearchCommandResult {
   query: string
   matches: KnowledgeEntrySummary[]
 }
+
+export interface FeaturesListCommandResult {
+  action: 'list'
+  hasConfig: boolean
+  configPath: string
+  features: FeatureSummary[]
+}
+
+export interface FeaturesSuggestCommandResult {
+  action: 'suggest'
+  suggestions: FeatureSuggestion[]
+}
+
+export interface FeatureShowCommandResult {
+  action: 'show'
+  hasConfig: boolean
+  configPath: string
+  feature: FeatureDetails
+}
+
+export interface FeatureAssignCommandResult {
+  action: 'assign'
+  assignment: FeatureAssignResult
+}
+
+export interface FeatureUnmappedCommandResult {
+  action: 'unmapped'
+  hasConfig: boolean
+  configPath: string
+  unmappedFiles: string[]
+}
+
+export type FeatureCommandResult =
+  | FeaturesListCommandResult
+  | FeaturesSuggestCommandResult
+  | FeatureShowCommandResult
+  | FeatureAssignCommandResult
+  | FeatureUnmappedCommandResult
 
 export type KnowledgeCommandResult =
   | KnowledgeAddCommandResult

@@ -1,14 +1,17 @@
 import type { ArchEdge, ArchNode } from '@archkit/core'
 import {
+  loadFeatureMapping,
   querySymbols,
   readPersistedEdges,
   readPersistedNodes,
+  resolveFeatureForNodes,
   resolveSymbolInput,
 } from '@archkit/graph'
 import type {
   CompileContextOptions,
   ContextBundle,
   ContextLimits,
+  ContextResolution,
   ContextSnippet,
   RankedNode,
 } from '../models/context-types'
@@ -22,28 +25,71 @@ const CONTEXT_LIMITS: ContextLimits = {
   maxPaths: 80,
 }
 
+const FEATURE_CONTEXT_LIMITS: ContextLimits = {
+  maxSnippets: 30,
+  maxFiles: 18,
+  maxLines: 1800,
+  maxDepth: 3,
+  maxEntrypoints: 8,
+  maxPaths: 120,
+}
+
+const UNBOUNDED_CONTEXT_LIMITS: ContextLimits = {
+  maxSnippets: Number.MAX_SAFE_INTEGER,
+  maxFiles: Number.MAX_SAFE_INTEGER,
+  maxLines: Number.MAX_SAFE_INTEGER,
+  maxDepth: Number.MAX_SAFE_INTEGER,
+  maxEntrypoints: Number.MAX_SAFE_INTEGER,
+  maxPaths: Number.MAX_SAFE_INTEGER,
+}
+
 export class ContextCompiler {
   public async compile(rootDir: string, options: CompileContextOptions): Promise<ContextBundle> {
     const query = options.query.trim()
-    const [nodes, edges, exactResolved, queryResult] = await Promise.all([
+    const [nodes, edges, featureMapping] = await Promise.all([
       readPersistedNodes(rootDir),
       readPersistedEdges(rootDir),
-      resolveSymbolInput(rootDir, query),
-      querySymbols(rootDir, query),
+      loadFeatureMapping(rootDir),
     ])
 
     const nodeMap = new Map(nodes.map((node) => [node.id, node]))
-    const rankedNodeIds = rankNodes(query, exactResolved.nodes, queryResult.matches)
-      .filter((ranked) => nodeMap.has(ranked.nodeId))
-      .map((ranked) => ranked.nodeId)
+    const featureResolution = resolveFeatureForNodes(featureMapping, query, nodes)
 
-    const entrypointIds = rankedNodeIds.slice(0, CONTEXT_LIMITS.maxEntrypoints)
-    const paths = expandPaths(entrypointIds, edges, nodeMap, CONTEXT_LIMITS)
-    const snippets = selectSnippets(entrypointIds, paths, nodeMap, CONTEXT_LIMITS)
-    const files = collectFiles(entrypointIds, paths, snippets, nodeMap, CONTEXT_LIMITS)
+    let rankedNodeIds: string[]
+    let resolution: ContextResolution
+    let limits = options.limits ? CONTEXT_LIMITS : UNBOUNDED_CONTEXT_LIMITS
+    if (featureResolution) {
+      resolution = {
+        kind: 'feature',
+        feature: featureResolution.feature,
+      }
+
+      limits = options.limits ? FEATURE_CONTEXT_LIMITS : UNBOUNDED_CONTEXT_LIMITS
+
+      rankedNodeIds = rankFeatureNodes(featureResolution.matchedNodes, nodeMap)
+    } else {
+      resolution = {
+        kind: 'query',
+      }
+
+      const [exactResolved, queryResult] = await Promise.all([
+        resolveSymbolInput(rootDir, query),
+        querySymbols(rootDir, query),
+      ])
+
+      rankedNodeIds = rankNodes(query, exactResolved.nodes, queryResult.matches)
+        .filter((ranked) => nodeMap.has(ranked.nodeId))
+        .map((ranked) => ranked.nodeId)
+    }
+
+      const entrypointIds = rankedNodeIds.slice(0, limits.maxEntrypoints)
+      const paths = expandPaths(entrypointIds, edges, nodeMap, limits)
+      const snippets = selectSnippets(entrypointIds, paths, nodeMap, limits)
+      const files = collectFiles(entrypointIds, paths, snippets, nodeMap, limits)
 
     return {
       query,
+      resolution,
       entrypoints: entrypointIds.map((nodeId) => toNodeLabel(nodeMap.get(nodeId))).filter(Boolean),
       files,
       paths: paths.map((pathIds) =>
@@ -52,6 +98,53 @@ export class ContextCompiler {
       snippets,
     }
   }
+}
+
+function rankFeatureNodes(
+  matchedNodes: ArchNode[],
+  nodeMap: Map<string, ArchNode>,
+): string[] {
+  const symbolNodes = matchedNodes.filter((node) => node.type !== 'file')
+  const selectedNodes = symbolNodes.length > 0 ? symbolNodes : matchedNodes
+
+  const byFilePath = selectedNodes.reduce<Map<string, string[]>>((accumulator, node) => {
+    if (!nodeMap.has(node.id)) {
+      return accumulator
+    }
+
+    const existing = accumulator.get(node.filePath)
+    if (existing) {
+      existing.push(node.id)
+    } else {
+      accumulator.set(node.filePath, [node.id])
+    }
+
+    return accumulator
+  }, new Map<string, string[]>())
+
+  const filePaths = [...byFilePath.keys()].sort((left, right) => left.localeCompare(right))
+  const queues = filePaths.map((filePath) => ({
+    filePath,
+    nodeIds: [...(byFilePath.get(filePath) ?? [])].sort((left, right) => left.localeCompare(right)),
+  }))
+
+  const rankedNodeIds: string[] = []
+  let hasPending = true
+  while (hasPending) {
+    hasPending = false
+
+    queues.forEach((queue) => {
+      const next = queue.nodeIds.shift()
+      if (!next) {
+        return
+      }
+
+      rankedNodeIds.push(next)
+      hasPending = true
+    })
+  }
+
+  return rankedNodeIds
 }
 
 function rankNodes(

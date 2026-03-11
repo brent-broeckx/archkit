@@ -7,7 +7,12 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
   }
 
   if (mode === 'llm') {
-    const lines = [`# Context: ${result.query}`, '', '## Entrypoints', ...toBulleted(result.entrypoints)]
+    const lines = [`# Context: ${result.query}`, '']
+
+    lines.push('## Resolution')
+    lines.push(...toBulleted(toResolutionLines(result)))
+
+    lines.push('', '## Entrypoints', ...toBulleted(result.entrypoints))
 
     lines.push('', '## Flow')
     if (result.paths.length === 0) {
@@ -32,7 +37,9 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
     return lines.join('\n')
   }
 
-  const lines = [`Context: ${result.query}`, '', 'Entrypoints', ...toIndented(result.entrypoints), '']
+  const lines = [`Context: ${result.query}`, '', 'Resolution', ...toIndented(toResolutionLines(result)), '']
+
+  lines.push('Entrypoints', ...toIndented(result.entrypoints), '')
 
   lines.push('Flow')
   if (result.paths.length === 0) {
@@ -53,6 +60,14 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
   }
 
   return lines.join('\n')
+}
+
+function toResolutionLines(result: ContextCommandResult): string[] {
+  if (result.resolution.kind === 'feature' && result.resolution.feature) {
+    return [`feature: ${result.resolution.feature}`]
+  }
+
+  return ['query']
 }
 
 function toIndented(values: string[]): string[] {

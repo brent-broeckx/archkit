@@ -3,7 +3,7 @@ import type { ResolvedSymbol, SymbolQueryResult } from '../models/query-types'
 import { readPersistedNodes, readPersistedSymbolsIndex } from './persisted-read'
 
 export async function querySymbols(rootDir: string, term: string): Promise<SymbolQueryResult> {
-  const normalizedTerm = term.trim().toLocaleLowerCase()
+const normalizedTerm = term.trim().toLocaleLowerCase()
   const symbolsIndex = await readPersistedSymbolsIndex(rootDir)
 
   const matches = Object.keys(symbolsIndex)

@@ -29,3 +29,9 @@ export async function readPersistedSymbolsIndex(
   const content = await readFile(symbolsPath, 'utf-8')
   return JSON.parse(content) as Record<string, string[]>
 }
+
+export async function readPersistedFilesIndex(rootDir: string): Promise<string[]> {
+  const filesPath = path.join(rootDir, '.arch', 'index', 'files.json')
+  const content = await readFile(filesPath, 'utf-8')
+  return JSON.parse(content) as string[]
+}
