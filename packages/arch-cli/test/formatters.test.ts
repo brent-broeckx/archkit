@@ -68,6 +68,27 @@ describe('cli formatters', () => {
     expect(formatContextResult(contextResult, 'llm')).toContain('## Resolution')
   })
 
+  it('formats context empty states and query resolution branches', () => {
+    const emptyContext = {
+      query: 'token',
+      resolution: { kind: 'query' as const },
+      entrypoints: [],
+      files: [],
+      paths: [],
+      snippets: [],
+    }
+
+    const human = formatContextResult(emptyContext, 'human')
+    const llm = formatContextResult(emptyContext, 'llm')
+    const json = formatContextResult(emptyContext, 'json')
+
+    expect(human).toContain('query')
+    expect(human).toContain('  (none)')
+    expect(llm).toContain('- query')
+    expect(llm).toContain('- none')
+    expect(json).toContain('"resolution"')
+  })
+
   it('formats show output with proper fence language and handles empty snippets', () => {
     const tsNode: ArchNode = {
       id: 'function:src/a.ts#run',
@@ -133,6 +154,97 @@ describe('cli formatters', () => {
     expect(list).toContain('- none')
     expect(show).toContain('## Notes')
     expect(search).toContain('(none)')
+  })
+
+  it('formats knowledge non-empty branches in human and llm modes', () => {
+    const listHuman = formatKnowledgeResult(
+      {
+        action: 'list',
+        entries: [
+          {
+            id: 'id-3',
+            title: 'A',
+            type: 'note',
+            feature: 'billing',
+            tags: [],
+            createdAt: '2026-03-10',
+            file: '.arch/knowledge/entries/billing/2026-03-10_id-3.md',
+            body: 'Body A',
+          },
+          {
+            id: 'id-4',
+            title: 'B',
+            type: 'decision',
+            feature: 'auth',
+            tags: [],
+            createdAt: '2026-03-10',
+            file: '.arch/knowledge/entries/auth/2026-03-10_id-4.md',
+            body: 'Body B',
+          },
+        ],
+      },
+      'human',
+    )
+
+    const addLlm = formatKnowledgeResult(
+      {
+        action: 'add',
+        entry: {
+          id: 'id-5',
+          title: 'Llm entry',
+          type: 'note',
+          feature: 'auth',
+          tags: [],
+          createdAt: '2026-03-10',
+          file: '.arch/knowledge/entries/auth/2026-03-10_id-5.md',
+          body: 'Details',
+        },
+      },
+      'llm',
+    )
+
+    const showHumanNoTags = formatKnowledgeResult(
+      {
+        action: 'show',
+        entry: {
+          id: 'id-6',
+          title: 'No tags',
+          type: 'note',
+          feature: 'platform',
+          tags: [],
+          createdAt: '2026-03-10',
+          file: '.arch/knowledge/entries/platform/2026-03-10_id-6.md',
+          body: 'Plain text',
+        },
+      },
+      'human',
+    )
+
+    const searchLlm = formatKnowledgeResult(
+      {
+        action: 'search',
+        query: 'auth',
+        matches: [
+          {
+            id: 'id-7',
+            title: 'Auth notes',
+            type: 'note',
+            feature: 'auth',
+            tags: ['team'],
+            createdAt: '2026-03-10',
+            file: '.arch/knowledge/entries/auth/2026-03-10_id-7.md',
+            body: 'Auth details',
+          },
+        ],
+      },
+      'llm',
+    )
+
+    expect(listHuman).toContain('auth')
+    expect(listHuman).toContain('billing')
+    expect(addLlm).toContain('# Knowledge Entry Created')
+    expect(showHumanNoTags).not.toContain('Tags:')
+    expect(searchLlm).toContain('id-7 (note, auth)')
   })
 
   it('formats feature command results across actions', () => {

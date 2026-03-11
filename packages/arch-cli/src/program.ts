@@ -91,7 +91,6 @@ export function buildProgram(): Command {
     .option('--json', 'Output JSON')
     .option('--format <format>', 'Output format (human|llm)', 'human')
     .action(async (query: string | undefined, outputOptions: ContextOutputOptions) => {
-      console.log('Running context command with options:', { query, ...outputOptions })
       await runContextCommand(query, outputOptions)
     })
 
