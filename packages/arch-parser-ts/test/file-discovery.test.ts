@@ -29,4 +29,38 @@ describe('file-discovery', () => {
 
     expect(files).toEqual(['src/a.ts', 'src/nested/b.tsx'])
   })
+
+  it('applies .archignore rules from .arch/.archignore', async () => {
+    const rootDir = await createTempDir('file-discovery-archignore')
+    tempDirs.push(rootDir)
+
+    await mkdir(path.join(rootDir, '.arch'), { recursive: true })
+    await mkdir(path.join(rootDir, 'src', 'keep'), { recursive: true })
+    await mkdir(path.join(rootDir, 'coverage', 'tmp'), { recursive: true })
+
+    await writeFile(path.join(rootDir, '.arch', '.archignore'), 'coverage/\n*.spec.ts\n', 'utf-8')
+    await writeFile(path.join(rootDir, 'src', 'keep', 'a.ts'), 'export const a = 1\n', 'utf-8')
+    await writeFile(path.join(rootDir, 'src', 'keep', 'a.spec.ts'), 'export const a = 1\n', 'utf-8')
+    await writeFile(path.join(rootDir, 'coverage', 'tmp', 'generated.ts'), 'export const g = 1\n', 'utf-8')
+
+    const files = discoverSourceFiles(rootDir)
+
+    expect(files).toEqual(['src/keep/a.ts'])
+  })
+
+  it('supports root-level .archignore fallback', async () => {
+    const rootDir = await createTempDir('file-discovery-root-archignore')
+    tempDirs.push(rootDir)
+
+    await mkdir(path.join(rootDir, 'src', 'keep'), { recursive: true })
+    await mkdir(path.join(rootDir, 'tmp'), { recursive: true })
+
+    await writeFile(path.join(rootDir, '.archignore'), 'tmp/\n', 'utf-8')
+    await writeFile(path.join(rootDir, 'src', 'keep', 'a.ts'), 'export const a = 1\n', 'utf-8')
+    await writeFile(path.join(rootDir, 'tmp', 'b.ts'), 'export const b = 1\n', 'utf-8')
+
+    const files = discoverSourceFiles(rootDir)
+
+    expect(files).toEqual(['src/keep/a.ts'])
+  })
 })

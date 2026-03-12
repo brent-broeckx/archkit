@@ -17,6 +17,7 @@ import {
   runKnowledgeSearchCommand,
   runKnowledgeShowCommand,
 } from './commands/knowledge'
+import { runInitCommand } from './commands/init'
 import { runQueryCommand } from './commands/query'
 import { runShowCommand } from './commands/show'
 import { runStatsCommand } from './commands/stats'
@@ -42,6 +43,16 @@ export function buildProgram(): Command {
     .option('--format <format>', 'Output format (human|llm)', 'human')
     .action(async (repoPath: string, outputOptions: OutputOptions) => {
       await runBuildCommand(repoPath, outputOptions)
+    })
+
+  program
+    .command('init')
+    .description('Initialize .arch directory and .archignore defaults')
+    .argument('[repoPath]', 'Repository path', '.')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (repoPath: string, outputOptions: OutputOptions) => {
+      await runInitCommand(repoPath, outputOptions)
     })
 
   program

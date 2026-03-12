@@ -15,6 +15,14 @@ export interface BuildCommandResult {
   meta: GraphMeta
 }
 
+export interface InitCommandResult {
+  repoPath: string
+  archDir: string
+  archIgnorePath: string
+  createdArchDir: boolean
+  createdArchIgnore: boolean
+}
+
 export interface StatsCommandResult {
   repoPath: string
   meta: GraphMeta

@@ -5,6 +5,7 @@ import { formatContextResult } from '../src/formatters/context'
 import { formatDeadCodeResult } from '../src/formatters/dead-code'
 import { formatDepsResult } from '../src/formatters/deps'
 import { formatFeatureResult } from '../src/formatters/feature'
+import { formatInitResult } from '../src/formatters/init'
 import { formatKnowledgeResult } from '../src/formatters/knowledge'
 import { formatQueryResult } from '../src/formatters/query'
 import { formatShowResult } from '../src/formatters/show'
@@ -36,6 +37,19 @@ describe('cli formatters', () => {
     expect(buildJson).toContain('"files": 2')
     expect(statsHuman).toContain('Repository Architecture')
     expect(statsJson).toContain('"edges": 4')
+  })
+
+  it('formats init result in human and json modes', () => {
+    const initResult = {
+      repoPath: '.',
+      archDir: '.arch',
+      archIgnorePath: '.arch/.archignore',
+      createdArchDir: true,
+      createdArchIgnore: false,
+    }
+
+    expect(formatInitResult(initResult, 'human')).toContain('Arch initialized')
+    expect(JSON.parse(formatInitResult(initResult, 'json'))).toEqual(initResult)
   })
 
   it('formats query/deps/context in all output modes', () => {

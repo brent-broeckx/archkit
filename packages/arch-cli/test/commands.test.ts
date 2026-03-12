@@ -1,4 +1,7 @@
 import type { ArchNode, GraphData, GraphMeta } from '@archkit/core'
+import { mkdtemp, readFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { FeatureMappingConfigError } from '@archkit/graph'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeBuildCommand } from '../src/commands/build'
@@ -23,6 +26,7 @@ import {
   executeKnowledgeSearchCommand, 
   executeKnowledgeShowCommand, 
 } from '../src/commands/knowledge'
+import { executeInitCommand } from '../src/commands/init'
 import { executeQueryCommand } from '../src/commands/query'
 import { executeShowCommand } from '../src/commands/show'
 import { executeStatsCommand } from '../src/commands/stats'
@@ -96,6 +100,7 @@ vi.mock('@archkit/graph', () => ({
 }))
 
 vi.mock('@archkit/parser-ts', () => ({
+  ARCHIGNORE_DEFAULT_CONTENT: '# test\ncoverage/\nnode_modules/\n',
   TypeScriptParser: vi.fn().mockImplementation(() => ({
     parseRepository: mockParseRepository,
   })),
@@ -134,6 +139,29 @@ describe('cli execute commands', () => {
 
     await expect(executeStatsCommand('.', '/repo')).rejects.toMatchObject({
       code: 'GRAPH_NOT_FOUND',
+    })
+  })
+
+  it('executes init command and creates .arch/.archignore idempotently', async () => {
+    const tempRoot = await mkdtemp(path.join(tmpdir(), 'arch-cli-init-'))
+
+    const first = await executeInitCommand('.', tempRoot)
+    expect(first).toMatchObject({
+      repoPath: '.',
+      archDir: '.arch',
+      archIgnorePath: '.arch/.archignore',
+      createdArchDir: true,
+      createdArchIgnore: true,
+    })
+
+    const archIgnoreContent = await readFile(path.join(tempRoot, '.arch', '.archignore'), 'utf-8')
+    expect(archIgnoreContent).toContain('coverage/')
+    expect(archIgnoreContent).toContain('node_modules/')
+
+    const second = await executeInitCommand('.', tempRoot)
+    expect(second).toMatchObject({
+      createdArchDir: false,
+      createdArchIgnore: false,
     })
   })
 

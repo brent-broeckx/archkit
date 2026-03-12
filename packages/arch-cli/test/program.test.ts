@@ -3,11 +3,13 @@ import { buildProgram } from '../src/program'
 
 const {
   mockRunBuild,
+  mockRunInit,
   mockRunStats,
   mockRunQuery,
   mockRunDeps,
   mockRunShow,
   mockRunContext,
+  mockRunDeadCode,
   mockRunFeatureAssign,
   mockRunFeatureShow,
   mockRunFeatureUnmapped,
@@ -20,11 +22,13 @@ const {
   mockBanner,
 } = vi.hoisted(() => ({
   mockRunBuild: vi.fn(),
+  mockRunInit: vi.fn(),
   mockRunStats: vi.fn(),
   mockRunQuery: vi.fn(),
   mockRunDeps: vi.fn(),
   mockRunShow: vi.fn(),
   mockRunContext: vi.fn(),
+  mockRunDeadCode: vi.fn(),
   mockRunFeatureAssign: vi.fn(),
   mockRunFeatureShow: vi.fn(),
   mockRunFeatureUnmapped: vi.fn(),
@@ -38,11 +42,13 @@ const {
 }))
 
 vi.mock('../src/commands/build', () => ({ runBuildCommand: mockRunBuild }))
+vi.mock('../src/commands/init', () => ({ runInitCommand: mockRunInit }))
 vi.mock('../src/commands/stats', () => ({ runStatsCommand: mockRunStats }))
 vi.mock('../src/commands/query', () => ({ runQueryCommand: mockRunQuery }))
 vi.mock('../src/commands/deps', () => ({ runDepsCommand: mockRunDeps }))
 vi.mock('../src/commands/show', () => ({ runShowCommand: mockRunShow }))
 vi.mock('../src/commands/context', () => ({ runContextCommand: mockRunContext }))
+vi.mock('../src/commands/dead-code', () => ({ runDeadCodeCommand: mockRunDeadCode }))
 vi.mock('../src/commands/feature', () => ({
   runFeatureAssignCommand: mockRunFeatureAssign,
   runFeatureShowCommand: mockRunFeatureShow,
@@ -68,12 +74,14 @@ describe('program', () => {
 
     await program.parseAsync(['node', 'arch'])
     await program.parseAsync(['node', 'arch', 'build', 'repo', '--json'])
+    await program.parseAsync(['node', 'arch', 'init', 'repo'])
     await program.parseAsync(['node', 'arch', 'stats'])
     await program.parseAsync(['node', 'arch', 'query', 'Auth'])
     await program.parseAsync(['node', 'arch', 'deps', 'Auth.login'])
     await program.parseAsync(['node', 'arch', 'show', 'Auth.login'])
     await program.parseAsync(['node', 'arch', 'context', 'auth'])
     await program.parseAsync(['node', 'arch', 'context', 'auth', '--no-limits'])
+    await program.parseAsync(['node', 'arch', 'dead-code'])
     await program.parseAsync(['node', 'arch', 'features'])
     await program.parseAsync(['node', 'arch', 'features', 'suggest'])
     await program.parseAsync(['node', 'arch', 'feature', 'authentication'])
@@ -101,12 +109,14 @@ describe('program', () => {
 
     expect(mockBanner).toHaveBeenCalledTimes(1)
     expect(mockRunBuild).toHaveBeenCalledWith('repo', expect.objectContaining({ json: true }))
+    expect(mockRunInit).toHaveBeenCalledWith('repo', expect.any(Object))
     expect(mockRunStats).toHaveBeenCalled()
     expect(mockRunQuery).toHaveBeenCalledWith('Auth', expect.any(Object))
     expect(mockRunDeps).toHaveBeenCalledWith('Auth.login', expect.any(Object))
     expect(mockRunShow).toHaveBeenCalledWith('Auth.login', expect.any(Object))
     expect(mockRunContext).toHaveBeenCalledWith('auth', expect.any(Object))
     expect(mockRunContext).toHaveBeenCalledWith('auth', expect.objectContaining({ limits: true }))
+    expect(mockRunDeadCode).toHaveBeenCalledWith(expect.any(Object))
     expect(mockRunFeaturesList).toHaveBeenCalledTimes(1)
     expect(mockRunFeaturesSuggest).toHaveBeenCalledTimes(1)
     expect(mockRunFeatureShow).toHaveBeenCalledWith('authentication', expect.any(Object))
