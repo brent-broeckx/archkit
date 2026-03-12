@@ -48,27 +48,33 @@ Run these commands from the repository you want to analyze.
 
 ```bash
 # 1) Build the architecture graph
+arch init .
+
+# 2) Build the architecture graph
 arch build .
 
-# 2) Inspect high-level stats
+# 3) Inspect high-level stats
 arch stats .
 
-# 3) Search for symbols
+# 4) Search for symbols
 arch query parser
 
-# 4) Inspect direct dependencies for a symbol
+# 5) Inspect direct dependencies for a symbol
 arch deps TypeScriptParser.parseRepository
 
-# 5) Show source snippet for a symbol
+# 6) Show source snippet for a symbol
 arch show TypeScriptParser.parseRepository
 
-# 6) Compile context for a task or feature
+# 7) Compile context for a task or feature
 arch context "authentication module"
 
-# 7) Configure explicit feature mappings
+# 8) Detect dead code candidates
+arch dead-code
+
+# 9) Configure explicit feature mappings
 arch feature assign authentication src/app/features/auth/**
 
-# 8) Inspect configured features
+# 10) Inspect configured features
 arch features
 arch feature authentication
 ```
@@ -108,6 +114,29 @@ arch build .
 arch build packages/arch-cli
 arch build . --json
 arch build . --format llm
+```
+
+### arch init [repoPath]
+
+Initialize Arch local configuration for a repository.
+
+Creates:
+
+- `.arch/`
+- `.arch/.archignore` (only if missing)
+
+Options:
+
+- `--json`
+- `--format <format>` (`human|llm`) where only `human` is supported currently
+
+Examples:
+
+```bash
+arch init
+arch init .
+arch init packages/arch-cli
+arch init . --json
 ```
 
 ### arch stats [repoPath]
@@ -204,6 +233,30 @@ arch context "ContextCompiler"
 arch context "dependency graph" --json
 arch context "build pipeline" --format llm
 arch context "command" --no-limits
+```
+
+### arch dead-code
+
+Detect dead code candidates from the architecture graph.
+
+Output includes deterministic sections for:
+
+- functions
+- methods
+- classes
+- files
+
+Options:
+
+- `--json`
+- `--format <format>` (`human|llm`)
+
+Examples:
+
+```bash
+arch dead-code
+arch dead-code --json
+arch dead-code --format llm
 ```
 
 ### arch features
@@ -358,8 +411,18 @@ Use `human` for terminal readability and `llm` for concise model-oriented contex
 
 Notes:
 
-- `llm` is supported for `query`, `deps`, `show`, `context`, and `knowledge`.
-- `llm` is not supported for `build`, `stats`, `features`, and `feature` commands.
+- `llm` is supported for `query`, `deps`, `show`, `context`, `dead-code`, and `knowledge`.
+- `llm` is not supported for `init`, `build`, `stats`, `features`, and `feature` commands.
+
+## Ignore configuration
+
+File discovery for `arch build` honors ignore rules from:
+
+1. built-in parser ignore directories
+2. `.arch/.archignore` (recommended)
+3. root-level `.archignore` (fallback compatibility)
+
+The `arch init` command seeds `.arch/.archignore` with practical defaults like `coverage/`, `node_modules/`, `dist/`, and `build/`.
 
 ## Feature mapping config
 
