@@ -1,6 +1,7 @@
 import { Command } from 'commander'
 import { runBuildCommand } from './commands/build'
 import { runContextCommand, type ContextOutputOptions } from './commands/context'
+import { runDeadCodeCommand } from './commands/dead-code'
 import { runDepsCommand } from './commands/deps'
 import {
   runFeatureAssignCommand,
@@ -61,6 +62,15 @@ export function buildProgram(): Command {
     .option('--format <format>', 'Output format (human|llm)', 'human')
     .action(async (term: string | undefined, outputOptions: OutputOptions) => {
       await runQueryCommand(term, outputOptions)
+    })
+
+  program
+    .command('dead-code')
+    .description('Detect unreferenced symbols and files')
+    .option('--json', 'Output JSON')
+    .option('--format <format>', 'Output format (human|llm)', 'human')
+    .action(async (outputOptions: OutputOptions) => {
+      await runDeadCodeCommand(outputOptions)
     })
 
   program

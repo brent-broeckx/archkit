@@ -38,6 +38,13 @@ export interface ShowCommandResult {
   snippet: string
 }
 
+export interface DeadCodeCommandResult {
+  functions: string[]
+  methods: string[]
+  classes: string[]
+  files: string[]
+}
+
 export interface KnowledgeAddCommandResult {
   action: 'add'
   entry: KnowledgeEntry

@@ -2,6 +2,7 @@ import type { ArchNode, GraphMeta } from '@archkit/core'
 import { describe, expect, it } from 'vitest'
 import { formatBuildResult } from '../src/formatters/build'
 import { formatContextResult } from '../src/formatters/context'
+import { formatDeadCodeResult } from '../src/formatters/dead-code'
 import { formatDepsResult } from '../src/formatters/deps'
 import { formatFeatureResult } from '../src/formatters/feature'
 import { formatKnowledgeResult } from '../src/formatters/knowledge'
@@ -66,6 +67,38 @@ describe('cli formatters', () => {
     expect(formatContextResult(contextResult, 'human')).toContain('feature: authentication')
     expect(formatContextResult(contextResult, 'llm')).toContain('## Flow')
     expect(formatContextResult(contextResult, 'llm')).toContain('## Resolution')
+  })
+
+  it('formats dead-code result in all output modes and empty states', () => {
+    const result = {
+      functions: ['createLegacyToken'],
+      methods: ['AuthService.legacyLogin'],
+      classes: ['LegacyPaymentProcessor'],
+      files: ['src/legacy/auth.ts'],
+    }
+
+    const human = formatDeadCodeResult(result, 'human')
+    const llm = formatDeadCodeResult(result, 'llm')
+    const json = formatDeadCodeResult(result, 'json')
+
+    expect(human).toContain('Dead Code Detected')
+    expect(human).toContain('Methods')
+    expect(human).toContain('AuthService.legacyLogin')
+    expect(llm).toContain('# Dead Code Detected')
+    expect(llm).toContain('## Files')
+    expect(JSON.parse(json)).toEqual(result)
+
+    const emptyHuman = formatDeadCodeResult(
+      { functions: [], methods: [], classes: [], files: [] },
+      'human',
+    )
+    const emptyLlm = formatDeadCodeResult(
+      { functions: [], methods: [], classes: [], files: [] },
+      'llm',
+    )
+
+    expect(emptyHuman).toContain('  (none)')
+    expect(emptyLlm).toContain('- none')
   })
 
   it('formats context empty states and query resolution branches', () => {

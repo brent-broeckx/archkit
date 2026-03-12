@@ -1192,8 +1192,87 @@ Knowledge must be stored in Markdown so developers can:
 - edit entries manually if needed
 - commit entries to Git
 
+Phase 7 - Dead Code Detection
+Goal:
 
-Phase 7 — Programmatic Consumption
+1. Identify functions, methods, classes, and files that are never referenced anywhere in the architecture graph.
+2. This helps developers clean up codebases and also helps AI agents avoid touching irrelevant code.
+3. Since Arch already builds a full symbol graph, this feature becomes surprisingly straightforward.
+
+### How it Works
+
+After arch build, the graph contains:
+- nodes (symbols)
+- edges (calls, imports, references)
+
+Dead code is simply:
+- nodes with zero incoming edges (excluding entrypoints)
+
+Example graph:
+
+AuthController.login → AuthService.login → JwtService.generateToken
+
+If another function exists:
+createLegacyToken()
+
+And no nodes reference it:
+incoming edges = 0
+
+Then it is dead code.
+
+Algorithm:
+
+- Iterate all symbol nodes.
+- Ignore certain categories:
+  1. entrypoints (routes, CLI commands)
+  2. exported public APIs (configurable)
+  3. framework-required exports
+
+Check:
+incomingEdges(symbol) === 0
+
+If true → candidate dead code.
+
+### CLI
+arch dead-code
+
+Example output:
+
+Dead Code Detected
+
+Functions
+  createLegacyToken
+  generateOldInvoice
+
+Classes
+  LegacyPaymentProcessor
+
+Files
+  src/legacy/auth.ts
+JSON Mode
+arch dead-code --json
+
+Example:
+
+{
+  "functions": ["createLegacyToken"],
+  "classes": ["LegacyPaymentProcessor"],
+  "files": ["src/legacy/auth.ts"]
+}
+
+### Why This Helps AI
+
+AI agents frequently waste context on:
+- unused utilities
+- deprecated modules
+- experimental code
+
+Dead code detection allows AI systems to ignore irrelevant files.
+
+This reduces context dramatically.
+
+
+Phase 8 — Programmatic Consumption
 
 Possible features:
 
@@ -1204,7 +1283,7 @@ Possible features:
 
 This phase depends on the output contracts from Phase 5.
 
-Phase 8 — Optional AI Integrations
+Phase 9 — Optional AI Integrations
 
 Possible future features:
 

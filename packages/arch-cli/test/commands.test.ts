@@ -3,6 +3,7 @@ import { FeatureMappingConfigError } from '@archkit/graph'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { executeBuildCommand } from '../src/commands/build'
 import { executeContextCommand } from '../src/commands/context'
+import { executeDeadCodeCommand } from '../src/commands/dead-code'
 import { executeDepsCommand } from '../src/commands/deps'
 import {
   executeFeatureAssignCommand,
@@ -34,6 +35,7 @@ const {
   mockReadPersistedNodes,
   mockResolveSymbolInput,
   mockQueryDependencies,
+  mockQueryDeadCode,
   mockExtractSnippetForNode,
   mockAddKnowledgeEntry,
   mockListKnowledgeEntries,
@@ -54,6 +56,7 @@ const {
   mockReadPersistedNodes: vi.fn(),
   mockResolveSymbolInput: vi.fn(),
   mockQueryDependencies: vi.fn(),
+  mockQueryDeadCode: vi.fn(),
   mockExtractSnippetForNode: vi.fn(),
   mockAddKnowledgeEntry: vi.fn(),
   mockListKnowledgeEntries: vi.fn(),
@@ -78,6 +81,7 @@ vi.mock('@archkit/graph', () => ({
   readPersistedNodes: mockReadPersistedNodes,
   resolveSymbolInput: mockResolveSymbolInput,
   queryDependencies: mockQueryDependencies,
+  queryDeadCode: mockQueryDeadCode,
   extractSnippetForNode: mockExtractSnippetForNode,
   loadFeatureMapping: mockLoadFeatureMapping,
   listFeatureSummaries: mockListFeatureSummaries,
@@ -198,6 +202,25 @@ describe('cli execute commands', () => {
 
     mockResolveSymbolInput.mockRejectedValueOnce(new Error('missing'))
     await expect(executeDepsCommand('x', '/repo')).rejects.toMatchObject({ code: 'GRAPH_NOT_FOUND' })
+  })
+
+  it('executes dead-code command and maps missing graph errors', async () => {
+    mockQueryDeadCode.mockResolvedValue({
+      functions: ['createLegacyToken'],
+      methods: ['AuthService.legacyLogin'],
+      classes: ['LegacyPaymentProcessor'],
+      files: ['src/legacy/auth.ts'],
+    })
+
+    await expect(executeDeadCodeCommand('/repo')).resolves.toEqual({
+      functions: ['createLegacyToken'],
+      methods: ['AuthService.legacyLogin'],
+      classes: ['LegacyPaymentProcessor'],
+      files: ['src/legacy/auth.ts'],
+    })
+
+    mockQueryDeadCode.mockRejectedValueOnce(new Error('missing'))
+    await expect(executeDeadCodeCommand('/repo')).rejects.toMatchObject({ code: 'GRAPH_NOT_FOUND' })
   })
 
   it('executes show command and handles symbol branches', async () => {

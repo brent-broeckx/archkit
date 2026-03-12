@@ -1,4 +1,5 @@
 export { ArchitectureGraph, createArchitectureGraph } from './models/architecture-graph'
+export type { DeadCodeResult } from './models/dead-code-types'
 export type { DepsResult } from './models/deps-types'
 export type {
 	FeatureAssignResult,
@@ -42,6 +43,7 @@ export {
 	searchKnowledgeEntries,
 } from './services/knowledge-storage'
 export { persistGraph, readGraphMeta } from './services/graph-storage'
+export { queryDeadCode } from './services/dead-code-query'
 export { queryDependencies } from './services/deps-query'
 export {
 	readPersistedEdges,
