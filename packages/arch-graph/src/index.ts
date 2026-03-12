@@ -91,4 +91,8 @@ export {
 	clearSemanticRetrievalCache,
 	runSemanticRetrieval,
 } from './services/retrieval/semantic-retriever'
+export {
+	readArchConfig,
+	resolveConfiguredEmbeddingProvider,
+} from './services/retrieval/provider-config'
 export { querySymbols, resolveSymbolInput } from './services/symbol-query'

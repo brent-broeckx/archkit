@@ -3,6 +3,7 @@ import path from 'node:path'
 import type { ArchNode } from '@archkit/core'
 import type { EmbeddingProvider } from './retrieval/embedding-provider'
 import { createFallbackEmbeddingProvider, embedDocuments } from './retrieval/embedding-provider'
+import { resolveConfiguredEmbeddingProvider } from './retrieval/provider-config'
 import type { SemanticDocument, SemanticIndexData, SemanticIndexMeta, SemanticVector } from '../models/retrieval-types'
 
 const SEMANTIC_DOCS_FILE = 'semantic-documents.jsonl'
@@ -18,14 +19,32 @@ export async function buildSemanticIndex(
   const indexDir = path.join(rootDir, '.arch', 'index')
   await mkdir(indexDir, { recursive: true })
 
-  const selectedProvider = provider ?? createFallbackEmbeddingProvider()
   const documents = await createSemanticDocuments(rootDir, nodes)
-  const vectors = await embedDocuments(documents, selectedProvider)
+  const configuredProvider = provider ?? (await resolveConfiguredEmbeddingProvider(rootDir))
+  let selectedProvider = configuredProvider ?? createFallbackEmbeddingProvider()
+  let vectors: Array<{ id: string; vector: number[] }>
+
+  try {
+    vectors = await embedDocuments(documents, selectedProvider)
+  } catch {
+    if (selectedProvider.name === 'fallback-hash-v1') {
+      throw new Error('Fallback embedding provider failed to build semantic index.')
+    }
+
+    selectedProvider = createFallbackEmbeddingProvider(
+      configuredProvider?.dimension && configuredProvider.dimension > 0
+        ? configuredProvider.dimension
+        : 64,
+    )
+    vectors = await embedDocuments(documents, selectedProvider)
+  }
+
+  const vectorDimension = vectors[0]?.vector.length ?? selectedProvider.dimension
 
   const meta: SemanticIndexMeta = {
     version: SEMANTIC_INDEX_VERSION,
     embeddingModel: selectedProvider.name,
-    dimension: selectedProvider.dimension,
+    dimension: vectorDimension,
     builtAt: new Date().toISOString(),
     documentCount: documents.length,
   }

@@ -22,8 +22,10 @@ export interface InitCommandResult {
   repoPath: string
   archDir: string
   archIgnorePath: string
+  archConfigPath: string
   createdArchDir: boolean
   createdArchIgnore: boolean
+  createdArchConfig: boolean
 }
 
 export interface StatsCommandResult {

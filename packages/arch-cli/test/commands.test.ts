@@ -150,18 +150,24 @@ describe('cli execute commands', () => {
       repoPath: '.',
       archDir: '.arch',
       archIgnorePath: '.arch/.archignore',
+      archConfigPath: '.arch/arch.conf',
       createdArchDir: true,
       createdArchIgnore: true,
+      createdArchConfig: true,
     })
 
     const archIgnoreContent = await readFile(path.join(tempRoot, '.arch', '.archignore'), 'utf-8')
+    const archConfigContent = await readFile(path.join(tempRoot, '.arch', 'arch.conf'), 'utf-8')
     expect(archIgnoreContent).toContain('coverage/')
     expect(archIgnoreContent).toContain('node_modules/')
+    expect(archConfigContent).toContain('"semantic"')
+    expect(archConfigContent).toContain('"provider": "fallback"')
 
     const second = await executeInitCommand('.', tempRoot)
     expect(second).toMatchObject({
       createdArchDir: false,
       createdArchIgnore: false,
+      createdArchConfig: false,
     })
   })
 

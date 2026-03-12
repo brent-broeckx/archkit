@@ -1,6 +1,7 @@
 import type { RetrievalEvidence, RetrievedItem } from '../../models/retrieval-types'
 import type { EmbeddingProvider } from './embedding-provider'
 import { createFallbackEmbeddingProvider } from './embedding-provider'
+import { resolveConfiguredEmbeddingProvider } from './provider-config'
 import { readSemanticIndex } from '../semantic-index-storage'
 
 const semanticCache = new Map<string, Awaited<ReturnType<typeof readSemanticIndex>>>()
@@ -12,8 +13,35 @@ export async function runSemanticRetrieval(
   provider?: EmbeddingProvider,
 ): Promise<RetrievedItem[]> {
   const index = await readSemanticIndexCached(rootDir)
-  const selectedProvider = provider ?? createFallbackEmbeddingProvider(index.meta.dimension)
-  const queryVector = await selectedProvider.embed(query)
+  const configuredProvider =
+    provider ??
+    (await resolveConfiguredEmbeddingProvider(rootDir, {
+      preferredDimension: index.meta.dimension,
+      preferredModel: extractModelName(index.meta.embeddingModel),
+    }))
+
+  let selectedProvider =
+    configuredProvider ??
+    createFallbackEmbeddingProvider(index.meta.dimension > 0 ? index.meta.dimension : 64)
+
+  let queryVector: number[]
+  try {
+    queryVector = await selectedProvider.embed(query)
+  } catch {
+    if (selectedProvider.name === 'fallback-hash-v1') {
+      throw new Error('Fallback embedding provider failed during semantic retrieval.')
+    }
+
+    selectedProvider = createFallbackEmbeddingProvider(
+      index.meta.dimension > 0 ? index.meta.dimension : 64,
+    )
+    queryVector = await selectedProvider.embed(query)
+  }
+
+  const normalizedQueryVector = normalizeVectorDimension(
+    queryVector,
+    index.meta.dimension > 0 ? index.meta.dimension : queryVector.length,
+  )
   const vectorById = new Map(index.vectors.map((item) => [item.id, item.vector]))
 
   const results = index.documents
@@ -23,7 +51,7 @@ export async function runSemanticRetrieval(
         return undefined
       }
 
-      const similarity = cosineSimilarity(queryVector, vector)
+      const similarity = cosineSimilarity(normalizedQueryVector, vector)
       if (similarity <= 0) {
         return undefined
       }
@@ -83,7 +111,8 @@ async function readSemanticIndexCached(rootDir: string): Promise<Awaited<ReturnT
 }
 
 function cosineSimilarity(left: number[], right: number[]): number {
-  if (left.length !== right.length || left.length === 0) {
+  const length = Math.min(left.length, right.length)
+  if (length === 0) {
     return 0
   }
 
@@ -91,7 +120,7 @@ function cosineSimilarity(left: number[], right: number[]): number {
   let leftNorm = 0
   let rightNorm = 0
 
-  for (let index = 0; index < left.length; index += 1) {
+  for (let index = 0; index < length; index += 1) {
     dot += left[index] * right[index]
     leftNorm += left[index] * left[index]
     rightNorm += right[index] * right[index]
@@ -102,4 +131,21 @@ function cosineSimilarity(left: number[], right: number[]): number {
   }
 
   return dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm))
+}
+
+function normalizeVectorDimension(vector: number[], targetDimension: number): number[] {
+  if (targetDimension <= 0 || vector.length === targetDimension) {
+    return vector
+  }
+
+  if (vector.length > targetDimension) {
+    return vector.slice(0, targetDimension)
+  }
+
+  return [...vector, ...new Array<number>(targetDimension - vector.length).fill(0)]
+}
+
+function extractModelName(embeddingModel: string): string {
+  const parts = embeddingModel.split(':')
+  return parts.length > 1 ? parts.slice(1).join(':') : embeddingModel
 }

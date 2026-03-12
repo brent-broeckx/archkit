@@ -12,8 +12,10 @@ export function formatInitResult(result: InitCommandResult, mode: OutputMode): s
     `Repository: ${result.repoPath}`,
     `Directory: ${result.archDir}`,
     `Ignore file: ${result.archIgnorePath}`,
+    `Config file: ${result.archConfigPath}`,
     '',
     `Created .arch directory: ${result.createdArchDir ? 'yes' : 'no'}`,
     `Created .archignore: ${result.createdArchIgnore ? 'yes' : 'no'}`,
+    `Created arch.conf: ${result.createdArchConfig ? 'yes' : 'no'}`,
   ].join('\n')
 }

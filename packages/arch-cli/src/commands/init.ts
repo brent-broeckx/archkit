@@ -14,6 +14,7 @@ export async function executeInitCommand(
   const rootDir = path.resolve(cwd, repoPath)
   const archDirAbsolute = path.join(rootDir, '.arch')
   const archIgnoreAbsolute = path.join(archDirAbsolute, '.archignore')
+    const archConfAbsolute = path.join(archDirAbsolute, 'arch.conf')
 
   const archDirExisted = existsSync(archDirAbsolute)
   await mkdir(archDirAbsolute, { recursive: true })
@@ -23,12 +24,32 @@ export async function executeInitCommand(
     await writeFile(archIgnoreAbsolute, ARCHIGNORE_DEFAULT_CONTENT, 'utf-8')
   }
 
+  const archConfExisted = existsSync(archConfAbsolute)
+  if (!archConfExisted) {
+    await writeFile(
+      archConfAbsolute,
+      `${JSON.stringify(
+        {
+          semantic: {
+            provider: 'fallback',
+            dimension: 64,
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      'utf-8',
+    )
+  }
+
   return {
     repoPath,
     archDir: '.arch',
     archIgnorePath: '.arch/.archignore',
+    archConfigPath: '.arch/arch.conf',
     createdArchDir: !archDirExisted,
     createdArchIgnore: !archIgnoreExisted,
+    createdArchConfig: !archConfExisted,
   }
 }
 
