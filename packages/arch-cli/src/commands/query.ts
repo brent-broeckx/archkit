@@ -1,12 +1,22 @@
-import { querySymbols, readPersistedNodes } from '@archkit/graph'
+import {
+  executeHybridRetrieval,
+  readPersistedNodes,
+  type RetrievalMode,
+} from '@archkit/graph'
 import { formatQueryResult } from '../formatters/query'
 import type { QueryCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'
 import { CliCommandError, handleCommandError, resolveOutputMode, writeFormattedOutput } from '../utils/command-output'
+import { COMMAND_DEFAULT_RETRIEVAL_MODE, resolveRetrievalMode } from '../utils/retrieval-mode'
+
+export interface QueryOutputOptions extends OutputOptions {
+  mode?: string
+}
 
 export async function executeQueryCommand(
   term: string | undefined,
   cwd: string = process.cwd(),
+  mode: RetrievalMode = COMMAND_DEFAULT_RETRIEVAL_MODE.query,
 ): Promise<QueryCommandResult> {
   const queryTerm = term?.trim()
 
@@ -16,12 +26,12 @@ export async function executeQueryCommand(
 
   try {
     const [queryResult, nodes] = await Promise.all([
-      querySymbols(cwd, queryTerm),
+      executeHybridRetrieval(cwd, queryTerm, { mode }),
       readPersistedNodes(cwd),
     ])
     const nodeMap = new Map(nodes.map((node) => [node.id, node]))
-    const matches = queryResult.matches
-      .flatMap((match) => match.nodeIds)
+    const matches = queryResult.results
+      .flatMap((result) => result.nodeIds)
       .map((nodeId) => {
         const node = nodeMap.get(nodeId)
         if (!node) {
@@ -45,7 +55,10 @@ export async function executeQueryCommand(
       })
 
     return {
-      term: queryResult.term,
+      term: queryResult.query,
+      mode,
+      retrievalMetadata: queryResult.retrievalMetadata,
+      results: queryResult.results,
       matches: dedupedMatches,
     }
   } catch {
@@ -55,11 +68,12 @@ export async function executeQueryCommand(
 
 export async function runQueryCommand(
   term: string | undefined,
-  outputOptions: OutputOptions,
+  outputOptions: QueryOutputOptions,
 ): Promise<void> {
   try {
     const mode = resolveOutputMode(outputOptions, true)
-    const result = await executeQueryCommand(term)
+    const retrievalMode = resolveRetrievalMode(outputOptions.mode, COMMAND_DEFAULT_RETRIEVAL_MODE.query)
+    const result = await executeQueryCommand(term, process.cwd(), retrievalMode)
     writeFormattedOutput(formatQueryResult(result, mode))
   } catch (error) {
     handleCommandError(error, outputOptions)

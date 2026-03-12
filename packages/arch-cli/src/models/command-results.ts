@@ -8,6 +8,9 @@ import type {
   FeatureSummary,
   KnowledgeEntry,
   KnowledgeEntrySummary,
+  QueryRetrievalMetadata,
+  RetrievedItem,
+  RetrievalMode,
 } from '@archkit/graph'
 
 export interface BuildCommandResult {
@@ -37,6 +40,9 @@ export interface QueryCommandMatch {
 
 export interface QueryCommandResult {
   term: string
+  mode?: RetrievalMode
+  retrievalMetadata?: QueryRetrievalMetadata
+  results?: RetrievedItem[]
   matches: QueryCommandMatch[]
 }
 

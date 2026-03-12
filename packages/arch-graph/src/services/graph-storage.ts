@@ -6,10 +6,16 @@ import { toJsonl } from '../utils/jsonl'
 import { sortEdges, sortNodes } from '../utils/sort-utils'
 import { createGraphMeta } from './graph-meta'
 import { createFilesIndex, createSymbolsIndex } from './indexes'
+import { buildSemanticIndex } from './semantic-index-storage'
+
+export interface PersistGraphOptions {
+  buildSemanticIndex?: boolean
+}
 
 export async function persistGraph(
   rootDir: string,
   graphData: GraphData,
+  options: PersistGraphOptions = {},
 ): Promise<PersistGraphResult> {
   const graphDir = path.join(rootDir, '.arch', 'graph')
   const indexDir = path.join(rootDir, '.arch', 'index')
@@ -42,10 +48,16 @@ export async function persistGraph(
     'utf-8',
   )
 
+  const shouldBuildSemanticIndex = options.buildSemanticIndex ?? true
+  const semanticIndexMeta = shouldBuildSemanticIndex
+    ? await buildSemanticIndex(rootDir, nodes)
+    : undefined
+
   return {
     graphDir,
     indexDir,
     meta,
+    semanticIndexMeta,
   }
 }
 

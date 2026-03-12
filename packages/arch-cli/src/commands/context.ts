@@ -1,18 +1,21 @@
 import { ContextCompiler } from '@archkit/context'
-import { FeatureMappingConfigError } from '@archkit/graph'
+import { FeatureMappingConfigError, type RetrievalMode } from '@archkit/graph'
 import { formatContextResult } from '../formatters/context'
 import type { ContextCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'
 import { CliCommandError, handleCommandError, resolveOutputMode, writeFormattedOutput } from '../utils/command-output'
+import { COMMAND_DEFAULT_RETRIEVAL_MODE, resolveRetrievalMode } from '../utils/retrieval-mode'
 
 export interface ContextOutputOptions extends OutputOptions {
   limits?: boolean
+  mode?: string
 }
 
 export async function executeContextCommand(
   query: string | undefined,
   cwd: string = process.cwd(),
   limits: boolean = false,
+  mode: RetrievalMode = COMMAND_DEFAULT_RETRIEVAL_MODE.context,
 ): Promise<ContextCommandResult> {
   const queryInput = query?.trim()
 
@@ -22,7 +25,7 @@ export async function executeContextCommand(
 
   try {
     const compiler = new ContextCompiler()
-    return await compiler.compile(cwd, { query: queryInput, limits })
+    return await compiler.compile(cwd, { query: queryInput, limits, mode })
   } catch (error) {
     if (error instanceof FeatureMappingConfigError) {
       throw new CliCommandError('INVALID_INPUT', error.message)
@@ -38,7 +41,16 @@ export async function runContextCommand(
 ): Promise<void> {
   try {
     const mode = resolveOutputMode(outputOptions, true)
-    const result = await executeContextCommand(query, process.cwd(), Boolean(outputOptions.limits))
+    const retrievalMode = resolveRetrievalMode(
+      outputOptions.mode,
+      COMMAND_DEFAULT_RETRIEVAL_MODE.context,
+    )
+    const result = await executeContextCommand(
+      query,
+      process.cwd(),
+      Boolean(outputOptions.limits),
+      retrievalMode,
+    )
     writeFormattedOutput(formatContextResult(result, mode))
   } catch (error) {
     handleCommandError(error, outputOptions)

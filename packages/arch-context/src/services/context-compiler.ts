@@ -1,11 +1,10 @@
 import type { ArchEdge, ArchNode } from '@archkit/core'
 import {
+  executeHybridRetrieval,
   loadFeatureMapping,
-  querySymbols,
   readPersistedEdges,
   readPersistedNodes,
   resolveFeatureForNodes,
-  resolveSymbolInput,
 } from '@archkit/graph'
 import type {
   CompileContextOptions,
@@ -46,6 +45,7 @@ const UNBOUNDED_CONTEXT_LIMITS: ContextLimits = {
 export class ContextCompiler {
   public async compile(rootDir: string, options: CompileContextOptions): Promise<ContextBundle> {
     const query = options.query.trim()
+    const mode = options.mode ?? 'hybrid'
     const limitsEnabled = options.limits ?? true
     const [nodes, edges, featureMapping] = await Promise.all([
       readPersistedNodes(rootDir),
@@ -58,6 +58,8 @@ export class ContextCompiler {
 
     let rankedNodeIds: string[]
     let resolution: ContextResolution
+    let retrievalMetadata: ContextBundle['retrievalMetadata']
+    let retrievalResults: ContextBundle['retrievalResults']
     let limits = limitsEnabled ? CONTEXT_LIMITS : UNBOUNDED_CONTEXT_LIMITS
     if (featureResolution) {
       resolution = {
@@ -68,29 +70,76 @@ export class ContextCompiler {
       limits = limitsEnabled ? FEATURE_CONTEXT_LIMITS : UNBOUNDED_CONTEXT_LIMITS
 
       rankedNodeIds = rankFeatureNodes(featureResolution.matchedNodes, nodeMap)
+      retrievalMetadata = {
+        query,
+        mode,
+        queryType: 'conceptual',
+        deterministicConfidence: 1,
+        semanticUsed: false,
+        reason: ['feature mapping exact match'],
+      }
+      retrievalResults = rankedNodeIds
+        .map((nodeId) => nodeMap.get(nodeId))
+        .filter((node): node is ArchNode => node !== undefined)
+        .map((node) => ({
+          id: node.id,
+          kind: node.type === 'file' ? 'file' : 'symbol',
+          name: node.name,
+          path: node.filePath,
+          nodeIds: [node.id],
+          score: 100,
+          deterministicScore: 100,
+          scoreBreakdown: {
+            exactScore: 0,
+            featureScore: 100,
+            graphScore: 0,
+            lexicalScore: 0,
+            semanticScore: 0,
+            totalScore: 100,
+          },
+          evidence: [
+            {
+              type: 'feature_match',
+              value: featureResolution.feature,
+              score: 90,
+              source: 'deterministic',
+            },
+          ],
+        }))
     } else {
       resolution = {
         kind: 'query',
       }
 
-      const [exactResolved, queryResult] = await Promise.all([
-        resolveSymbolInput(rootDir, query),
-        querySymbols(rootDir, query),
-      ])
-
-      rankedNodeIds = rankNodes(query, exactResolved.nodes, queryResult.matches)
-        .filter((ranked) => nodeMap.has(ranked.nodeId))
-        .map((ranked) => ranked.nodeId)
+      const retrieval = await executeHybridRetrieval(rootDir, query, { mode })
+      retrievalMetadata = retrieval.retrievalMetadata
+      retrievalResults = retrieval.results
+      rankedNodeIds = retrieval.results
+        .flatMap((result) => result.nodeIds)
+        .filter((nodeId, index, values) => values.indexOf(nodeId) === index)
+        .filter((nodeId) => nodeMap.has(nodeId))
     }
 
-      const entrypointIds = rankedNodeIds.slice(0, limits.maxEntrypoints)
-      const paths = expandPaths(entrypointIds, edges, nodeMap, limits)
-      const snippets = selectSnippets(entrypointIds, paths, nodeMap, limits)
-      const files = collectFiles(entrypointIds, paths, snippets, nodeMap, limits)
+    const evidenceByNodeId = new Map<string, string[]>()
+    ;(retrievalResults ?? []).forEach((result) => {
+      const labels = result.evidence.map((evidence) => evidence.type)
+      result.nodeIds.forEach((nodeId) => {
+        const existing = evidenceByNodeId.get(nodeId) ?? []
+        evidenceByNodeId.set(nodeId, [...new Set([...existing, ...labels])])
+      })
+    })
+
+    const entrypointIds = rankedNodeIds.slice(0, limits.maxEntrypoints)
+    const paths = expandPaths(entrypointIds, edges, nodeMap, limits)
+    const snippets = selectSnippets(entrypointIds, paths, nodeMap, limits, evidenceByNodeId)
+    const files = collectFiles(entrypointIds, paths, snippets, nodeMap, limits)
 
     return {
       query,
+      mode,
       resolution,
+      retrievalMetadata,
+      retrievalResults,
       entrypoints: entrypointIds.map((nodeId) => toNodeLabel(nodeMap.get(nodeId))).filter(Boolean),
       files,
       paths: paths.map((pathIds) =>
@@ -256,6 +305,7 @@ function selectSnippets(
   paths: string[][],
   nodeMap: Map<string, ArchNode>,
   limits: ContextLimits,
+  evidenceByNodeId?: Map<string, string[]>,
 ): ContextSnippet[] {
   const candidateNodeIds = orderedUniqueNodeIds(entrypointIds, paths)
   const snippets: ContextSnippet[] = []
@@ -291,6 +341,7 @@ function selectSnippets(
       symbol: node.name,
       startLine: node.loc.startLine,
       endLine: node.loc.endLine,
+      evidence: evidenceByNodeId?.get(node.id),
     })
 
     selectedFiles.add(node.filePath)

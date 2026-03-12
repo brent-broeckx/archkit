@@ -69,6 +69,7 @@ export function buildProgram(): Command {
     .command('query')
     .description('Search for symbols')
     .argument('[term]', 'Symbol query term')
+    .option('--mode <mode>', 'Retrieval mode (exact|lexical|hybrid|semantic)', 'hybrid')
     .option('--json', 'Output JSON')
     .option('--format <format>', 'Output format (human|llm)', 'human')
     .action(async (term: string | undefined, outputOptions: OutputOptions) => {
@@ -108,6 +109,7 @@ export function buildProgram(): Command {
     .command('context')
     .description('Compile context for a feature or symbol')
     .argument('[query]', 'Context query')
+    .option('--mode <mode>', 'Retrieval mode (exact|lexical|hybrid|semantic)', 'hybrid')
     .option('--no-limits', 'Disable context limits and return full matched context')
     .option('--json', 'Output JSON')
     .option('--format <format>', 'Output format (human|llm)', 'human')
