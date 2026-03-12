@@ -109,18 +109,44 @@ Testing strategy highlights:
 
 ## Commands
 
+- `arch init` (implemented)
 - `arch build` (implemented)
 - `arch stats` (implemented)
 - `arch query` (implemented)
 - `arch deps` (implemented)
 - `arch show` (implemented)
 - `arch context` (implemented)
+- `arch dead-code` (implemented)
 - `arch features` (implemented)
 - `arch features suggest` (implemented)
 - `arch feature <name>` (implemented)
 - `arch feature assign <feature> <pattern>` (implemented)
 - `arch feature unmapped` (implemented)
 - `arch knowledge add|list|show|search` (implemented)
+
+### `arch init`
+
+Initializes Arch local configuration in the target repository.
+
+What it creates:
+
+- `.arch/`
+- `.arch/.archignore` (only if missing)
+
+Examples:
+
+```bash
+pnpm arch init
+pnpm arch init .
+pnpm arch init packages/arch-cli
+pnpm arch init . --json
+```
+
+Notes:
+
+- command is idempotent; existing files are preserved
+- `.arch/.archignore` is seeded with practical defaults (for example: `coverage/`, `node_modules/`, `dist/`, `build/`)
+- parser discovery also supports root-level `.archignore` as a compatibility fallback
 
 ### `arch build`
 
@@ -247,6 +273,31 @@ Current limitations / notes:
 - context budgets are enforced: max snippets `20`, max files `12`, max lines `1200`
 - query scoring is deterministic but intentionally lightweight in MVP
 - use `--no-limits` to disable context output limits and return all matched artifacts
+
+### `arch dead-code`
+
+Detects candidate dead code using graph incoming-edge analysis.
+
+Output sections:
+
+- `functions`
+- `methods`
+- `classes`
+- `files`
+
+Examples:
+
+```bash
+pnpm arch dead-code
+pnpm arch dead-code --json
+pnpm arch dead-code --format llm
+```
+
+Current limitations / notes:
+
+- current exclusions are MVP-minimal: exported symbols and route nodes
+- detection uses deterministic incoming edges (`calls`, `references`, `extends`, `implements`) for symbol candidates
+- file candidates are constrained by incoming file edges and candidate symbol state
 
 ### `arch features`
 
@@ -405,8 +456,8 @@ Flag behavior:
 
 - `--json` takes precedence over `--format`
 - supported `--format` values are `human` and `llm`
-- `llm` format is currently available for `query`, `deps`, `show`, and `context`
-- `llm` format is not supported for `build`, `stats`, `features`, and `feature` commands
+- `llm` format is currently available for `query`, `deps`, `show`, `context`, `dead-code`, and `knowledge`
+- `llm` format is not supported for `init`, `build`, `stats`, `features`, and `feature` commands
 
 JSON error shape:
 
@@ -427,3 +478,17 @@ Use a consistent working directory for `build`, `stats`, `query`, `deps`, `show`
 - using `pnpm --filter @archkit/cli arch ...` runs from `packages/arch-cli` and uses that folder's `.arch` data
 
 For full product requirements, see `MVP.md`.
+
+## Ignore Configuration
+
+Arch file discovery honors ignore rules in this order:
+
+1. built-in parser directory ignores (for example `.arch`, `node_modules`, `dist`, `build`)
+2. `.arch/.archignore` (created by `arch init`)
+3. root-level `.archignore` (fallback compatibility)
+
+`.archignore` syntax is intentionally simple and deterministic:
+
+- blank lines and `#` comments are ignored
+- glob-like patterns are supported
+- `!pattern` can re-include previously ignored matches
