@@ -22,7 +22,29 @@ export {
 	type KnowledgeType,
 } from './models/knowledge-types'
 export type { PersistGraphResult } from './models/persist-types'
-export type { ResolvedSymbol, SymbolQueryMatch, SymbolQueryResult } from './models/query-types'
+export type {
+	ConfidenceEvaluation,
+	DeterministicCandidate,
+	DeterministicRetrievalResult,
+	HybridRetrievalResult,
+	QueryRetrievalMetadata,
+	QueryType,
+	RetrievedItem,
+	RetrievalEvidence,
+	RetrievalMode,
+	RetrievalOptions,
+	ScoreBreakdown,
+	SemanticDocument,
+	SemanticIndexData,
+	SemanticIndexMeta,
+	SemanticVector,
+} from './models/retrieval-types'
+export type {
+	HybridQueryResult,
+	ResolvedSymbol,
+	SymbolQueryMatch,
+	SymbolQueryResult,
+} from './models/query-types'
 export {
 	FeatureMappingConfigError,
 	assignFeaturePattern,
@@ -46,10 +68,31 @@ export { persistGraph, readGraphMeta } from './services/graph-storage'
 export { queryDeadCode } from './services/dead-code-query'
 export { queryDependencies } from './services/deps-query'
 export {
+	buildSemanticIndex,
+	readSemanticIndex,
+} from './services/semantic-index-storage'
+export {
 	readPersistedEdges,
 	readPersistedFilesIndex,
 	readPersistedNodes,
 	readPersistedSymbolsIndex,
 } from './services/persisted-read'
 export { extractSnippetForNode } from './services/snippet'
+export {
+	executeHybridRetrieval,
+} from './services/retrieval/hybrid-retrieval-engine'
+export {
+	classifyQuery,
+} from './services/retrieval/query-classifier'
+export {
+	evaluateDeterministicConfidence,
+} from './services/retrieval/confidence-evaluator'
+export {
+	clearSemanticRetrievalCache,
+	runSemanticRetrieval,
+} from './services/retrieval/semantic-retriever'
+export {
+	readArchConfig,
+	resolveConfiguredEmbeddingProvider,
+} from './services/retrieval/provider-config'
 export { querySymbols, resolveSymbolInput } from './services/symbol-query'

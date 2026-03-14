@@ -1,13 +1,37 @@
 import type { QueryCommandResult } from '../models/command-results'
 import type { OutputMode } from '../models/output-mode'
+import {
+  formatEvidenceInline,
+  formatRetrievalMetadataHuman,
+  formatRetrievalMetadataLlm,
+} from './retrieval'
 
 export function formatQueryResult(result: QueryCommandResult, mode: OutputMode): string {
   if (mode === 'json') {
-    return JSON.stringify(result, null, 2)
+    const jsonResult = {
+      query: result.term,
+      mode: result.mode ?? 'hybrid',
+      retrieval_metadata: result.retrievalMetadata ?? null,
+      results:
+        result.results ??
+        result.matches.map((match) => ({
+          kind: match.type === 'file' ? 'file' : 'symbol',
+          path: match.file,
+          name: match.name,
+          nodeIds: [match.nodeId],
+          score: 0,
+          evidence: [],
+        })),
+      matches: result.matches,
+    }
+
+    return JSON.stringify(jsonResult, null, 2)
   }
 
   if (mode === 'llm') {
     const lines = [`# Query: ${result.term}`, '', '## Matches']
+
+    lines.push('', '## Retrieval Metadata', ...formatRetrievalMetadataLlm(result.retrievalMetadata))
 
     if (result.matches.length === 0) {
       lines.push('- none')
@@ -17,6 +41,13 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
     result.matches.forEach((match) => {
       lines.push(`- ${match.type}: ${match.name} (${match.file})`)
     })
+
+    if (result.results && result.results.length > 0) {
+      lines.push('', '## Evidence')
+      result.results.slice(0, 10).forEach((item) => {
+        lines.push(`- ${item.path} [${item.score}]: ${formatEvidenceInline(item)}`)
+      })
+    }
 
     return lines.join('\n')
   }
@@ -32,6 +63,8 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
   })
 
   const lines = [`arch query ${result.term}`, '']
+  lines.push(...formatRetrievalMetadataHuman(result.retrievalMetadata), '')
+
   if (result.matches.length === 0) {
     lines.push('No matches found.')
     return lines.join('\n')
@@ -53,6 +86,14 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
       })
     lines.push('')
   })
+
+  if (result.results && result.results.length > 0) {
+    lines.push('Evidence', '')
+    result.results.slice(0, 10).forEach((item) => {
+      lines.push(`  ${item.path} [${item.score}]`)
+      lines.push(`    ${formatEvidenceInline(item)}`)
+    })
+  }
 
   return lines.join('\n').trimEnd()
 }

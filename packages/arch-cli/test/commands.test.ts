@@ -35,7 +35,7 @@ import { CliCommandError } from '../src/utils/command-output'
 const {
   mockPersistGraph,
   mockReadGraphMeta,
-  mockQuerySymbols,
+  mockExecuteHybridRetrieval,
   mockReadPersistedNodes,
   mockResolveSymbolInput,
   mockQueryDependencies,
@@ -56,7 +56,7 @@ const {
 } = vi.hoisted(() => ({
   mockPersistGraph: vi.fn(),
   mockReadGraphMeta: vi.fn(),
-  mockQuerySymbols: vi.fn(),
+  mockExecuteHybridRetrieval: vi.fn(),
   mockReadPersistedNodes: vi.fn(),
   mockResolveSymbolInput: vi.fn(),
   mockQueryDependencies: vi.fn(),
@@ -81,7 +81,7 @@ vi.mock('@archkit/graph', () => ({
   FeatureMappingConfigError: class FeatureMappingConfigError extends Error {},
   persistGraph: mockPersistGraph,
   readGraphMeta: mockReadGraphMeta,
-  querySymbols: mockQuerySymbols,
+  executeHybridRetrieval: mockExecuteHybridRetrieval,
   readPersistedNodes: mockReadPersistedNodes,
   resolveSymbolInput: mockResolveSymbolInput,
   queryDependencies: mockQueryDependencies,
@@ -150,18 +150,24 @@ describe('cli execute commands', () => {
       repoPath: '.',
       archDir: '.arch',
       archIgnorePath: '.arch/.archignore',
+      archConfigPath: '.arch/arch.conf',
       createdArchDir: true,
       createdArchIgnore: true,
+      createdArchConfig: true,
     })
 
     const archIgnoreContent = await readFile(path.join(tempRoot, '.arch', '.archignore'), 'utf-8')
+    const archConfigContent = await readFile(path.join(tempRoot, '.arch', 'arch.conf'), 'utf-8')
     expect(archIgnoreContent).toContain('coverage/')
     expect(archIgnoreContent).toContain('node_modules/')
+    expect(archConfigContent).toContain('"semantic"')
+    expect(archConfigContent).toContain('"provider": "fallback"')
 
     const second = await executeInitCommand('.', tempRoot)
     expect(second).toMatchObject({
       createdArchDir: false,
       createdArchIgnore: false,
+      createdArchConfig: false,
     })
   })
 
@@ -181,10 +187,54 @@ describe('cli execute commands', () => {
       loc: { startLine: 3, endLine: 4 },
     }
 
-    mockQuerySymbols.mockResolvedValue({
-      term: 'Auth',
-      matches: [
-        { name: 'Auth', nodeIds: [nodeB.id, nodeA.id, nodeA.id] },
+    mockExecuteHybridRetrieval.mockResolvedValue({
+      query: 'Auth',
+      mode: 'hybrid',
+      retrievalMetadata: {
+        query: 'Auth',
+        mode: 'hybrid',
+        queryType: 'symbol',
+        deterministicConfidence: 0.9,
+        semanticUsed: false,
+        reason: [],
+      },
+      results: [
+        {
+          id: nodeB.id,
+          kind: 'symbol',
+          name: nodeB.name,
+          path: nodeB.filePath,
+          nodeIds: [nodeB.id],
+          score: 120,
+          deterministicScore: 120,
+          scoreBreakdown: {
+            exactScore: 100,
+            featureScore: 0,
+            graphScore: 0,
+            lexicalScore: 20,
+            semanticScore: 0,
+            totalScore: 120,
+          },
+          evidence: [],
+        },
+        {
+          id: nodeA.id,
+          kind: 'symbol',
+          name: nodeA.name,
+          path: nodeA.filePath,
+          nodeIds: [nodeA.id, nodeA.id],
+          score: 100,
+          deterministicScore: 100,
+          scoreBreakdown: {
+            exactScore: 100,
+            featureScore: 0,
+            graphScore: 0,
+            lexicalScore: 0,
+            semanticScore: 0,
+            totalScore: 100,
+          },
+          evidence: [],
+        },
       ],
     })
     mockReadPersistedNodes.mockResolvedValue([nodeA, nodeB])
@@ -192,11 +242,12 @@ describe('cli execute commands', () => {
     const result = await executeQueryCommand(' Auth ', '/repo')
     expect(result.term).toBe('Auth')
     expect(result.matches.map((match) => match.nodeId)).toEqual([nodeA.id, nodeB.id])
+    expect(result.retrievalMetadata?.queryType).toBe('symbol')
   })
 
   it('validates query input and graph-not-found mapping', async () => {
     await expect(executeQueryCommand('   ', '/repo')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
-    mockQuerySymbols.mockRejectedValue(new Error('missing'))
+    mockExecuteHybridRetrieval.mockRejectedValue(new Error('missing'))
     mockReadPersistedNodes.mockResolvedValue([])
     await expect(executeQueryCommand('x', '/repo')).rejects.toMatchObject({ code: 'GRAPH_NOT_FOUND' })
   })
@@ -287,9 +338,17 @@ describe('cli execute commands', () => {
     })
 
     await expect(executeContextCommand(' auth ', '/repo')).resolves.toMatchObject({ query: 'auth' })
-    expect(mockCompileContext).toHaveBeenCalledWith('/repo', { query: 'auth', limits: false })
+    expect(mockCompileContext).toHaveBeenCalledWith('/repo', {
+      query: 'auth',
+      limits: false,
+      mode: 'hybrid',
+    })
     await expect(executeContextCommand(' auth ', '/repo', true)).resolves.toMatchObject({ query: 'auth' })
-    expect(mockCompileContext).toHaveBeenCalledWith('/repo', { query: 'auth', limits: true })
+    expect(mockCompileContext).toHaveBeenCalledWith('/repo', {
+      query: 'auth',
+      limits: true,
+      mode: 'hybrid',
+    })
     await expect(executeContextCommand(' ', '/repo')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
 
     mockCompileContext.mockRejectedValueOnce(new Error('missing'))

@@ -1,13 +1,29 @@
 import type { ContextCommandResult } from '../models/command-results'
 import type { OutputMode } from '../models/output-mode'
+import { formatRetrievalMetadataHuman, formatRetrievalMetadataLlm } from './retrieval'
 
 export function formatContextResult(result: ContextCommandResult, mode: OutputMode): string {
   if (mode === 'json') {
-    return JSON.stringify(result, null, 2)
+    const jsonResult = {
+      query: result.query,
+      mode: result.mode ?? 'hybrid',
+      retrieval_metadata: result.retrievalMetadata ?? null,
+      results: result.retrievalResults ?? [],
+      resolution: result.resolution,
+      entrypoints: result.entrypoints,
+      files: result.files,
+      paths: result.paths,
+      snippets: result.snippets,
+    }
+
+    return JSON.stringify(jsonResult, null, 2)
   }
 
   if (mode === 'llm') {
     const lines = [`# Context: ${result.query}`, '']
+
+    lines.push('## Retrieval Metadata')
+    lines.push(...formatRetrievalMetadataLlm(result.retrievalMetadata))
 
     lines.push('## Resolution')
     lines.push(...toBulleted(toResolutionLines(result)))
@@ -29,7 +45,7 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
     } else {
       result.snippets.forEach((snippet) => {
         lines.push(
-          `- ${snippet.symbol} (${snippet.file}:${snippet.startLine}-${snippet.endLine})`,
+          `- ${snippet.symbol} (${snippet.file}:${snippet.startLine}-${snippet.endLine})${toEvidenceSuffix(snippet.evidence)}`,
         )
       })
     }
@@ -38,6 +54,11 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
   }
 
   const lines = [`Context: ${result.query}`, '', 'Resolution', ...toIndented(toResolutionLines(result)), '']
+
+  const retrievalLines = formatRetrievalMetadataHuman(result.retrievalMetadata)
+  if (retrievalLines.length > 0) {
+    lines.push(...retrievalLines, '')
+  }
 
   lines.push('Entrypoints', ...toIndented(result.entrypoints), '')
 
@@ -55,7 +76,9 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
     lines.push('  (none)')
   } else {
     result.snippets.forEach((snippet) => {
-      lines.push(`  ${snippet.symbol} (${snippet.file}:${snippet.startLine}-${snippet.endLine})`)
+      lines.push(
+        `  ${snippet.symbol} (${snippet.file}:${snippet.startLine}-${snippet.endLine})${toEvidenceSuffix(snippet.evidence)}`,
+      )
     })
   }
 
@@ -84,4 +107,12 @@ function toBulleted(values: string[]): string[] {
   }
 
   return values.map((value) => `- ${value}`)
+}
+
+function toEvidenceSuffix(evidence: string[] | undefined): string {
+  if (!evidence || evidence.length === 0) {
+    return ''
+  }
+
+  return ` [evidence: ${evidence.slice(0, 2).join(', ')}]`
 }

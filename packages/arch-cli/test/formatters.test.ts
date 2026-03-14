@@ -44,8 +44,10 @@ describe('cli formatters', () => {
       repoPath: '.',
       archDir: '.arch',
       archIgnorePath: '.arch/.archignore',
+      archConfigPath: '.arch/arch.conf',
       createdArchDir: true,
       createdArchIgnore: false,
+      createdArchConfig: true,
     }
 
     expect(formatInitResult(initResult, 'human')).toContain('Arch initialized')

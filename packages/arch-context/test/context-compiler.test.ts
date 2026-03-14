@@ -5,15 +5,13 @@ import { ContextCompiler } from '../src/services/context-compiler'
 const {
   mockReadPersistedNodes,
   mockReadPersistedEdges,
-  mockResolveSymbolInput,
-  mockQuerySymbols,
+  mockExecuteHybridRetrieval,
   mockLoadFeatureMapping,
   mockResolveFeatureForNodes,
 } = vi.hoisted(() => ({
   mockReadPersistedNodes: vi.fn(),
   mockReadPersistedEdges: vi.fn(),
-  mockResolveSymbolInput: vi.fn(),
-  mockQuerySymbols: vi.fn(),
+  mockExecuteHybridRetrieval: vi.fn(),
   mockLoadFeatureMapping: vi.fn(),
   mockResolveFeatureForNodes: vi.fn(),
 }))
@@ -21,8 +19,7 @@ const {
 vi.mock('@archkit/graph', () => ({
   readPersistedNodes: mockReadPersistedNodes,
   readPersistedEdges: mockReadPersistedEdges,
-  resolveSymbolInput: mockResolveSymbolInput,
-  querySymbols: mockQuerySymbols,
+  executeHybridRetrieval: mockExecuteHybridRetrieval,
   loadFeatureMapping: mockLoadFeatureMapping,
   resolveFeatureForNodes: mockResolveFeatureForNodes,
 }))
@@ -62,10 +59,37 @@ describe('context-compiler', () => {
     mockReadPersistedEdges.mockResolvedValue(edges)
     mockLoadFeatureMapping.mockResolvedValue({ hasConfig: false, configPath: '.arch/features.json', features: {} })
     mockResolveFeatureForNodes.mockReturnValue(undefined)
-    mockResolveSymbolInput.mockResolvedValue({ input: 'entry', nodes: [nodes[0]] })
-    mockQuerySymbols.mockResolvedValue({
-      term: 'entry',
-      matches: [{ name: 'entry', nodeIds: [nodes[0].id] }],
+    mockExecuteHybridRetrieval.mockResolvedValue({
+      query: 'entry',
+      mode: 'hybrid',
+      retrievalMetadata: {
+        query: 'entry',
+        mode: 'hybrid',
+        queryType: 'symbol',
+        deterministicConfidence: 0.92,
+        semanticUsed: false,
+        reason: [],
+      },
+      results: [
+        {
+          id: nodes[0].id,
+          kind: 'symbol',
+          name: nodes[0].name,
+          path: nodes[0].filePath,
+          nodeIds: [nodes[0].id],
+          score: 100,
+          deterministicScore: 100,
+          scoreBreakdown: {
+            exactScore: 100,
+            featureScore: 0,
+            graphScore: 0,
+            lexicalScore: 0,
+            semanticScore: 0,
+            totalScore: 100,
+          },
+          evidence: [{ type: 'exact_symbol_match', value: 'entry', score: 100, source: 'deterministic' }],
+        },
+      ],
     })
 
     const compiler = new ContextCompiler()
@@ -73,11 +97,18 @@ describe('context-compiler', () => {
 
     expect(result.query).toBe('entry')
     expect(result.resolution).toEqual({ kind: 'query' })
+    expect(result.retrievalMetadata?.deterministicConfidence).toBe(0.92)
     expect(result.entrypoints).toEqual(['entry'])
     expect(result.paths).toEqual([['entry', 'next']])
     expect(result.files).toEqual(['src/a.ts', 'src/b.ts'])
     expect(result.snippets).toEqual([
-      { file: 'src/a.ts', symbol: 'entry', startLine: 1, endLine: 4 },
+      {
+        file: 'src/a.ts',
+        symbol: 'entry',
+        startLine: 1,
+        endLine: 4,
+        evidence: ['exact_symbol_match'],
+      },
       { file: 'src/b.ts', symbol: 'next', startLine: 2, endLine: 7 },
     ])
   })
@@ -87,15 +118,36 @@ describe('context-compiler', () => {
     mockReadPersistedEdges.mockResolvedValue([])
     mockLoadFeatureMapping.mockResolvedValue({ hasConfig: false, configPath: '.arch/features.json', features: {} })
     mockResolveFeatureForNodes.mockReturnValue(undefined)
-    mockResolveSymbolInput.mockResolvedValue({ input: 'x', nodes: [] })
-    mockQuerySymbols.mockResolvedValue({ term: 'x', matches: [] })
+    mockExecuteHybridRetrieval.mockResolvedValue({
+      query: 'x',
+      mode: 'hybrid',
+      retrievalMetadata: {
+        query: 'x',
+        mode: 'hybrid',
+        queryType: 'conceptual',
+        deterministicConfidence: 0.1,
+        semanticUsed: false,
+        reason: ['fewer than 3 deterministic results'],
+      },
+      results: [],
+    })
 
     const compiler = new ContextCompiler()
     const result = await compiler.compile('/repo', { query: 'x' })
 
     expect(result).toEqual({
       query: 'x',
+      mode: 'hybrid',
       resolution: { kind: 'query' },
+      retrievalMetadata: {
+        query: 'x',
+        mode: 'hybrid',
+        queryType: 'conceptual',
+        deterministicConfidence: 0.1,
+        semanticUsed: false,
+        reason: ['fewer than 3 deterministic results'],
+      },
+      retrievalResults: [],
       entrypoints: [],
       files: [],
       paths: [],
@@ -139,8 +191,7 @@ describe('context-compiler', () => {
 
     expect(result.resolution).toEqual({ kind: 'feature', feature: 'authentication' })
     expect(result.entrypoints).toEqual(['login', 'logout'])
-    expect(mockResolveSymbolInput).not.toHaveBeenCalled()
-    expect(mockQuerySymbols).not.toHaveBeenCalled()
+    expect(mockExecuteHybridRetrieval).not.toHaveBeenCalled()
   })
 
   it('balances feature entrypoints across matched files and uses higher feature limit', async () => {
@@ -232,15 +283,35 @@ describe('context-compiler', () => {
     mockReadPersistedEdges.mockResolvedValue([])
     mockLoadFeatureMapping.mockResolvedValue({ hasConfig: false, configPath: '.arch/features.json', features: {} })
     mockResolveFeatureForNodes.mockReturnValue(undefined)
-    mockResolveSymbolInput.mockResolvedValue({ input: 'fn', nodes: nodes })
-    mockQuerySymbols.mockResolvedValue({
-      term: 'fn',
-      matches: [
-        {
-          name: 'fn',
-          nodeIds: nodes.map((node) => node.id),
+    mockExecuteHybridRetrieval.mockResolvedValue({
+      query: 'fn',
+      mode: 'hybrid',
+      retrievalMetadata: {
+        query: 'fn',
+        mode: 'hybrid',
+        queryType: 'symbol',
+        deterministicConfidence: 0.9,
+        semanticUsed: false,
+        reason: [],
+      },
+      results: nodes.map((node) => ({
+        id: node.id,
+        kind: 'symbol',
+        name: node.name,
+        path: node.filePath,
+        nodeIds: [node.id],
+        score: 80,
+        deterministicScore: 80,
+        scoreBreakdown: {
+          exactScore: 0,
+          featureScore: 0,
+          graphScore: 0,
+          lexicalScore: 80,
+          semanticScore: 0,
+          totalScore: 80,
         },
-      ],
+        evidence: [{ type: 'token_match', value: '1 shared token(s)', score: 25, source: 'deterministic' }],
+      })),
     })
 
     const compiler = new ContextCompiler()
