@@ -10,6 +10,7 @@ export function formatRetrievalMetadataHuman(metadata: QueryRetrievalMetadata | 
     `  mode: ${metadata.mode}`,
     `  query type: ${metadata.queryType}`,
     `  deterministic confidence: ${metadata.deterministicConfidence}`,
+    `  lexical used: ${metadata.lexicalUsed ? 'yes' : 'no'}`,
     `  semantic used: ${metadata.semanticUsed ? 'yes' : 'no'}`,
   ]
 
@@ -34,6 +35,7 @@ export function formatRetrievalMetadataLlm(metadata: QueryRetrievalMetadata | un
     `- mode: ${metadata.mode}`,
     `- query type: ${metadata.queryType}`,
     `- deterministic confidence: ${metadata.deterministicConfidence}`,
+    `- lexical used: ${metadata.lexicalUsed ? 'yes' : 'no'}`,
     `- semantic used: ${metadata.semanticUsed ? 'yes' : 'no'}`,
   ]
 

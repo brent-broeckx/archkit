@@ -16,14 +16,7 @@ import type {
   RetrievalEvidence,
   RetrievedItem,
 } from '../../models/retrieval-types'
-
-const ALIASES: Record<string, string[]> = {
-  auth: ['authentication', 'authorization', 'token', 'jwt'],
-  authentication: ['auth', 'token', 'jwt'],
-  logging: ['logger', 'log'],
-  payment: ['payments', 'billing', 'invoice'],
-  payments: ['payment', 'billing', 'invoice'],
-}
+import { RETRIEVAL_ALIASES } from './query-aliases'
 
 export async function runDeterministicRetrieval(
   rootDir: string,
@@ -270,7 +263,7 @@ function countOverlap(left: string[], right: string[]): number {
 }
 
 function toAliasEvidence(query: string, candidate: string): RetrievalEvidence | undefined {
-  const aliases = ALIASES[query] ?? []
+  const aliases = RETRIEVAL_ALIASES[query] ?? []
   const matched = aliases.find((alias) => candidate.includes(alias))
   if (!matched) {
     return undefined

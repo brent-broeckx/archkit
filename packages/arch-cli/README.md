@@ -81,6 +81,26 @@ arch feature authentication
 
 Arch stores graph data under `.arch` in the target repository.
 
+## Retrieval modes and lexical search
+
+`arch query` and `arch context` support retrieval mode selection:
+
+- `--mode exact`: deterministic retrieval only
+- `--mode lexical`: deterministic + lexical retrieval only
+- `--mode hybrid` (default): deterministic with confidence-based lexical and semantic fallback
+- `--mode semantic`: semantic retrieval enabled regardless of confidence
+
+Lexical retrieval is local-first and uses:
+
+- SQLite FTS5 index at `.arch/index/lexical.db`
+- BM25 ranking for lexical matches
+
+Notes:
+
+- `arch build` prepares lexical artifacts under `.arch/index`
+- explicit `--mode lexical` forces lexical execution
+- `arch show` and `arch deps` remain deterministic-only
+
 ## Command reference
 
 ### arch
@@ -159,10 +179,11 @@ arch stats . --format llm
 
 ### arch query [term]
 
-Search symbols by deterministic name matching.
+Search symbols using deterministic, lexical, semantic, or hybrid retrieval.
 
 Options:
 
+- `--mode <mode>` retrieval mode (`exact|lexical|hybrid|semantic`, default `hybrid`)
 - `--json`
 - `--format <format>` (`human|llm`)
 
@@ -171,6 +192,8 @@ Examples:
 ```bash
 arch query parser
 arch query TypeScriptParser
+arch query addNode --mode lexical
+arch query "how retrieval confidence works" --mode semantic
 arch query parseRepository --json
 arch query parse --format llm
 ```
@@ -181,6 +204,7 @@ Show direct dependencies and callers for a symbol.
 
 Options:
 
+- `--mode <mode>` retrieval mode (`exact|lexical|hybrid|semantic`, default `hybrid`)
 - `--json`
 - `--format <format>` (`human|llm`)
 
@@ -230,6 +254,8 @@ Examples:
 ```bash
 arch context "authentication"
 arch context "ContextCompiler"
+arch context addNode --mode lexical
+arch context "explain parser state mutation flow" --mode semantic
 arch context "dependency graph" --json
 arch context "build pipeline" --format llm
 arch context "command" --no-limits

@@ -5,11 +5,15 @@ const {
   mockClassifyQuery,
   mockRunDeterministicRetrieval,
   mockEvaluateDeterministicConfidence,
+  mockLoadFeatureMapping,
+  mockRunLexicalRetrieval,
   mockRunSemanticRetrieval,
 } = vi.hoisted(() => ({
   mockClassifyQuery: vi.fn(),
   mockRunDeterministicRetrieval: vi.fn(),
   mockEvaluateDeterministicConfidence: vi.fn(),
+  mockLoadFeatureMapping: vi.fn(),
+  mockRunLexicalRetrieval: vi.fn(),
   mockRunSemanticRetrieval: vi.fn(),
 }))
 
@@ -25,6 +29,14 @@ vi.mock('../src/services/retrieval/confidence-evaluator', () => ({
   evaluateDeterministicConfidence: mockEvaluateDeterministicConfidence,
 }))
 
+vi.mock('../src/services/feature-mapping', () => ({
+  loadFeatureMapping: mockLoadFeatureMapping,
+}))
+
+vi.mock('../src/services/retrieval/lexical-retriever', () => ({
+  runLexicalRetrieval: mockRunLexicalRetrieval,
+}))
+
 vi.mock('../src/services/retrieval/semantic-retriever', () => ({
   runSemanticRetrieval: mockRunSemanticRetrieval,
 }))
@@ -32,6 +44,8 @@ vi.mock('../src/services/retrieval/semantic-retriever', () => ({
 describe('hybrid-retrieval-engine', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockLoadFeatureMapping.mockResolvedValue({ hasConfig: false, configPath: '.arch/features.json', features: {} })
+    mockRunLexicalRetrieval.mockResolvedValue([])
   })
 
   it('runs semantic retrieval in hybrid mode when deterministic confidence is weak', async () => {
@@ -91,7 +105,9 @@ describe('hybrid-retrieval-engine', () => {
 
     const result = await executeHybridRetrieval('/repo', 'authentication', { mode: 'hybrid' })
 
+    expect(mockRunLexicalRetrieval).toHaveBeenCalledTimes(1)
     expect(mockRunSemanticRetrieval).toHaveBeenCalledTimes(1)
+    expect(result.retrievalMetadata.lexicalUsed).toBe(true)
     expect(result.retrievalMetadata.semanticUsed).toBe(true)
   })
 
@@ -113,7 +129,9 @@ describe('hybrid-retrieval-engine', () => {
 
     const result = await executeHybridRetrieval('/repo', 'AuthService', { mode: 'exact' })
 
+    expect(mockRunLexicalRetrieval).not.toHaveBeenCalled()
     expect(mockRunSemanticRetrieval).not.toHaveBeenCalled()
+    expect(result.retrievalMetadata.lexicalUsed).toBe(false)
     expect(result.retrievalMetadata.semanticUsed).toBe(false)
   })
 
@@ -136,7 +154,9 @@ describe('hybrid-retrieval-engine', () => {
 
     const result = await executeHybridRetrieval('/repo', 'src/auth/token.ts', { mode: 'semantic' })
 
+    expect(mockRunLexicalRetrieval).not.toHaveBeenCalled()
     expect(mockRunSemanticRetrieval).toHaveBeenCalledTimes(1)
+    expect(result.retrievalMetadata.lexicalUsed).toBe(false)
     expect(result.retrievalMetadata.semanticUsed).toBe(true)
   })
 
@@ -158,7 +178,9 @@ describe('hybrid-retrieval-engine', () => {
     mockRunSemanticRetrieval.mockRejectedValue(new Error('index missing'))
 
     const lexical = await executeHybridRetrieval('/repo', 'auth', { mode: 'lexical' })
+    expect(mockRunLexicalRetrieval).toHaveBeenCalled()
     expect(mockRunSemanticRetrieval).not.toHaveBeenCalled()
+    expect(lexical.retrievalMetadata.lexicalUsed).toBe(true)
     expect(lexical.retrievalMetadata.semanticUsed).toBe(false)
 
     const hybrid = await executeHybridRetrieval('/repo', 'auth', { mode: 'hybrid' })

@@ -75,6 +75,7 @@ export class ContextCompiler {
         mode,
         queryType: 'conceptual',
         deterministicConfidence: 1,
+        lexicalUsed: false,
         semanticUsed: false,
         reason: ['feature mapping exact match'],
       }

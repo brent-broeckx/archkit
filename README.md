@@ -152,6 +152,11 @@ Notes:
 
 Builds the architecture graph from source files and writes deterministic output under `.arch`.
 
+In addition to graph and JSON indexes, `arch build` now also builds a local lexical search index:
+
+- `.arch/index/lexical.db` (SQLite FTS5)
+- BM25 ranking for lexical retrieval used by `arch query` and `arch context`
+
 Examples:
 
 ```bash
@@ -189,20 +194,30 @@ Current limitations / notes:
 
 Searches indexed symbols and prints deterministic grouped matches.
 
+Retrieval modes are available with `--mode`:
+
+- `exact`: deterministic retrieval only
+- `lexical`: deterministic + lexical (SQLite FTS5/BM25), semantic disabled
+- `hybrid` (default): deterministic, then lexical/semantic as needed by confidence
+- `semantic`: semantic retrieval enabled regardless of confidence
+
 Examples:
 
 ```bash
 pnpm arch query TypeScriptParser
 pnpm arch query parse
 pnpm arch query buildProgram
+pnpm arch query addNode --mode lexical
+pnpm arch query "how context ranking works" --mode semantic
 pnpm arch query parser --json
 pnpm arch query parser --format llm
 ```
 
 Current limitations / notes:
 
-- matching is case-insensitive substring over symbol names
-- searches symbol index only (no semantic/fuzzy ranking)
+- lexical mode uses local SQLite FTS5 + BM25 scoring (no external service)
+- deterministic exact evidence still outranks lexical evidence in final ranking
+- semantic mode can add conceptually related matches when enabled
 - requires `.arch` data from a prior build in the same working directory
 
 ### `arch deps`
@@ -264,6 +279,8 @@ pnpm arch context TypeScriptParser.parseRepository
 pnpm arch context method:packages/arch-parser-ts/src/services/type-script-parser.ts#TypeScriptParser.parseRepository
 pnpm arch context parser --json
 pnpm arch context parser --format llm
+pnpm arch context addNode --mode lexical
+pnpm arch context "explain parser state flow" --mode semantic
 pnpm arch context command --no-limits
 ```
 
@@ -271,7 +288,8 @@ Current limitations / notes:
 
 - graph expansion is bounded (depth 3) and deterministic
 - context budgets are enforced: max snippets `20`, max files `12`, max lines `1200`
-- query scoring is deterministic but intentionally lightweight in MVP
+- retrieval in query mode supports deterministic, lexical (SQLite BM25), and semantic layers
+- explicit `--mode lexical` forces lexical retrieval execution; `--mode semantic` forces semantic retrieval execution
 - use `--no-limits` to disable context output limits and return all matched artifacts
 
 ### `arch dead-code`

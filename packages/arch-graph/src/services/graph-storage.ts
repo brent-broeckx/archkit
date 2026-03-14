@@ -6,6 +6,7 @@ import { toJsonl } from '../utils/jsonl'
 import { sortEdges, sortNodes } from '../utils/sort-utils'
 import { createGraphMeta } from './graph-meta'
 import { createFilesIndex, createSymbolsIndex } from './indexes'
+import { buildLexicalIndex } from './retrieval/fts-index-builder'
 import { buildSemanticIndex } from './semantic-index-storage'
 
 export interface PersistGraphOptions {
@@ -49,6 +50,7 @@ export async function persistGraph(
   )
 
   const shouldBuildSemanticIndex = options.buildSemanticIndex ?? true
+  const lexicalIndexMeta = await buildLexicalIndex(rootDir, nodes).catch(() => undefined)
   const semanticIndexMeta = shouldBuildSemanticIndex
     ? await buildSemanticIndex(rootDir, nodes)
     : undefined
@@ -57,6 +59,7 @@ export async function persistGraph(
     graphDir,
     indexDir,
     meta,
+    lexicalIndexMeta,
     semanticIndexMeta,
   }
 }
