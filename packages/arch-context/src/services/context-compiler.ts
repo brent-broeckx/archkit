@@ -2,6 +2,7 @@ import type { ArchEdge, ArchNode } from '@archkit/core'
 import {
   executeHybridRetrieval,
   loadFeatureMapping,
+  type NextAction,
   readPersistedEdges,
   readPersistedNodes,
   resolveFeatureForNodes,
@@ -60,6 +61,8 @@ export class ContextCompiler {
     let resolution: ContextResolution
     let retrievalMetadata: ContextBundle['retrievalMetadata']
     let retrievalResults: ContextBundle['retrievalResults']
+    let nextActions: ContextBundle['nextActions']
+    let ambiguities: ContextBundle['ambiguities']
     let limits = limitsEnabled ? CONTEXT_LIMITS : UNBOUNDED_CONTEXT_LIMITS
     if (featureResolution) {
       resolution = {
@@ -107,6 +110,8 @@ export class ContextCompiler {
             },
           ],
         }))
+      nextActions = buildFeatureNextActions(query, rankedNodeIds, nodeMap)
+      ambiguities = []
     } else {
       resolution = {
         kind: 'query',
@@ -115,6 +120,8 @@ export class ContextCompiler {
       const retrieval = await executeHybridRetrieval(rootDir, query, { mode })
       retrievalMetadata = retrieval.retrievalMetadata
       retrievalResults = retrieval.results
+      nextActions = retrieval.nextActions
+      ambiguities = retrieval.ambiguities
       rankedNodeIds = retrieval.results
         .flatMap((result) => result.nodeIds)
         .filter((nodeId, index, values) => values.indexOf(nodeId) === index)
@@ -135,7 +142,7 @@ export class ContextCompiler {
     const snippets = selectSnippets(entrypointIds, paths, nodeMap, limits, evidenceByNodeId)
     const files = collectFiles(entrypointIds, paths, snippets, nodeMap, limits)
 
-    return {
+    const bundle: ContextBundle = {
       query,
       mode,
       resolution,
@@ -148,7 +155,73 @@ export class ContextCompiler {
       ),
       snippets,
     }
+
+    if (nextActions && nextActions.length > 0) {
+      bundle.nextActions = nextActions
+    }
+
+    if (ambiguities && ambiguities.length > 0) {
+      bundle.ambiguities = ambiguities
+    }
+
+    return bundle
   }
+}
+
+function buildFeatureNextActions(
+  query: string,
+  rankedNodeIds: string[],
+  nodeMap: Map<string, ArchNode>,
+): NextAction[] {
+  const resolvedNodes = rankedNodeIds
+    .map((nodeId) => nodeMap.get(nodeId))
+    .filter((node): node is ArchNode => node !== undefined)
+
+  const first = resolvedNodes[0]
+  const symbolNode = resolvedNodes.find((node) => node.type !== 'file')
+  const actions: NextAction[] = []
+
+  if (first) {
+    actions.push({
+      tool: 'arch_show',
+      priority: 1,
+      args: {
+        target: first.type === 'file' ? first.filePath : first.name,
+      },
+      reason: 'Representative entrypoint for the matched feature',
+      confidence: 0.92,
+      expectedValue: 'Inspect the primary feature entrypoint implementation',
+      sourceResultId: first.id,
+    })
+  }
+
+  if (symbolNode) {
+    actions.push({
+      tool: 'arch_deps',
+      priority: actions.length + 1,
+      args: {
+        target: symbolNode.name,
+      },
+      reason: 'Feature-scoped symbol is a good dependency pivot',
+      confidence: 0.85,
+      expectedValue: 'Trace callers and callees inside the feature slice',
+      sourceResultId: symbolNode.id,
+    })
+  }
+
+  actions.push({
+    tool: 'arch_context',
+    priority: actions.length + 1,
+    args: { query },
+    reason: 'Broaden context if feature boundaries still seem unclear',
+    confidence: 0.65,
+    expectedValue: 'Expand to neighboring architecture paths',
+  })
+
+  return actions.slice(0, 4).map((action, index) => ({
+    ...action,
+    priority: index + 1,
+  }))
 }
 
 function rankFeatureNodes(

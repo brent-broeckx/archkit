@@ -1,4 +1,6 @@
 import type {
+  NextAction,
+  NextActionAmbiguity,
   QueryRetrievalMetadata,
   RetrievedItem,
   RetrievalMode,
@@ -23,6 +25,8 @@ export interface ContextBundle {
   resolution: ContextResolution
   retrievalMetadata?: QueryRetrievalMetadata
   retrievalResults?: RetrievedItem[]
+  nextActions?: NextAction[]
+  ambiguities?: NextActionAmbiguity[]
   entrypoints: string[]
   files: string[]
   paths: string[][]

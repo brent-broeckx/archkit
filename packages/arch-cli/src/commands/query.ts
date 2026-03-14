@@ -59,6 +59,8 @@ export async function executeQueryCommand(
       mode,
       retrievalMetadata: queryResult.retrievalMetadata,
       results: queryResult.results,
+      nextActions: queryResult.nextActions,
+      ambiguities: queryResult.ambiguities,
       matches: dedupedMatches,
     }
   } catch {

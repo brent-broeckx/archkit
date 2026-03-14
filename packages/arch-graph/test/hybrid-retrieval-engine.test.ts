@@ -109,6 +109,8 @@ describe('hybrid-retrieval-engine', () => {
     expect(mockRunSemanticRetrieval).toHaveBeenCalledTimes(1)
     expect(result.retrievalMetadata.lexicalUsed).toBe(true)
     expect(result.retrievalMetadata.semanticUsed).toBe(true)
+    expect(result.nextActions?.length).toBeGreaterThan(0)
+    expect(result.nextActions?.[0]?.priority).toBe(1)
   })
 
   it('skips semantic retrieval in exact mode', async () => {
@@ -133,6 +135,7 @@ describe('hybrid-retrieval-engine', () => {
     expect(mockRunSemanticRetrieval).not.toHaveBeenCalled()
     expect(result.retrievalMetadata.lexicalUsed).toBe(false)
     expect(result.retrievalMetadata.semanticUsed).toBe(false)
+    expect(result.nextActions?.length).toBeGreaterThan(0)
   })
 
   it('always runs semantic retrieval in semantic mode', async () => {

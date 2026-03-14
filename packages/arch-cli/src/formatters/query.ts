@@ -5,6 +5,7 @@ import {
   formatRetrievalMetadataHuman,
   formatRetrievalMetadataLlm,
 } from './retrieval'
+import { formatNextActionsHuman, formatNextActionsLlm } from './next-actions'
 
 export function formatQueryResult(result: QueryCommandResult, mode: OutputMode): string {
   if (mode === 'json') {
@@ -23,6 +24,8 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
           evidence: [],
         })),
       matches: result.matches,
+      next_actions: result.nextActions ?? [],
+      ambiguities: result.ambiguities ?? [],
     }
 
     return JSON.stringify(jsonResult, null, 2)
@@ -35,6 +38,12 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
 
     if (result.matches.length === 0) {
       lines.push('- none')
+
+      const nextActionLines = formatNextActionsLlm(result.nextActions)
+      if (nextActionLines.length > 0) {
+        lines.push('', ...nextActionLines)
+      }
+
       return lines.join('\n')
     }
 
@@ -47,6 +56,11 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
       result.results.slice(0, 10).forEach((item) => {
         lines.push(`- ${item.path} [${item.score}]: ${formatEvidenceInline(item)}`)
       })
+    }
+
+    const nextActionLines = formatNextActionsLlm(result.nextActions)
+    if (nextActionLines.length > 0) {
+      lines.push('', ...nextActionLines)
     }
 
     return lines.join('\n')
@@ -93,6 +107,11 @@ export function formatQueryResult(result: QueryCommandResult, mode: OutputMode):
       lines.push(`  ${item.path} [${item.score}]`)
       lines.push(`    ${formatEvidenceInline(item)}`)
     })
+  }
+
+  const nextActionLines = formatNextActionsHuman(result.nextActions)
+  if (nextActionLines.length > 0) {
+    lines.push('', ...nextActionLines)
   }
 
   return lines.join('\n').trimEnd()

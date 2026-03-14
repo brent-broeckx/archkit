@@ -2,6 +2,7 @@ import { queryDependencies, resolveSymbolInput } from '@archkit/graph'
 import { formatDepsResult } from '../formatters/deps'
 import type { DepsCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'
+import { buildDepsNextActions } from '../services/next-actions'
 import { CliCommandError, handleCommandError, resolveOutputMode, writeFormattedOutput } from '../utils/command-output'
 
 export async function executeDepsCommand(
@@ -36,7 +37,11 @@ export async function executeDepsCommand(
       )
     }
 
-    return queryDependencies(cwd, symbolInput, resolved.nodes)
+    const result = await queryDependencies(cwd, symbolInput, resolved.nodes)
+    return {
+      ...result,
+      nextActions: buildDepsNextActions(result),
+    }
   } catch (error) {
     if (error instanceof CliCommandError) {
       throw error

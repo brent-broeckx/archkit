@@ -1,5 +1,6 @@
 import type { DepsCommandResult } from '../models/command-results'
 import type { OutputMode } from '../models/output-mode'
+import { formatNextActionsHuman, formatNextActionsLlm } from './next-actions'
 
 export function formatDepsResult(result: DepsCommandResult, mode: OutputMode): string {
   if (mode === 'json') {
@@ -7,7 +8,7 @@ export function formatDepsResult(result: DepsCommandResult, mode: OutputMode): s
   }
 
   if (mode === 'llm') {
-    return [
+    const lines = [
       `# Dependencies: ${result.input}`,
       '',
       '## Imports',
@@ -18,10 +19,17 @@ export function formatDepsResult(result: DepsCommandResult, mode: OutputMode): s
       '',
       '## Callers',
       ...toBulleted(result.callers),
-    ].join('\n')
+    ]
+
+    const nextActionLines = formatNextActionsLlm(result.nextActions)
+    if (nextActionLines.length > 0) {
+      lines.push('', ...nextActionLines)
+    }
+
+    return lines.join('\n')
   }
 
-  return [
+  const lines = [
     `arch deps ${result.input}`,
     '',
     'Imports',
@@ -32,7 +40,14 @@ export function formatDepsResult(result: DepsCommandResult, mode: OutputMode): s
     '',
     'Callers',
     ...toIndented(result.callers),
-  ].join('\n')
+  ]
+
+  const nextActionLines = formatNextActionsHuman(result.nextActions)
+  if (nextActionLines.length > 0) {
+    lines.push('', ...nextActionLines)
+  }
+
+  return lines.join('\n')
 }
 
 function toIndented(values: string[]): string[] {

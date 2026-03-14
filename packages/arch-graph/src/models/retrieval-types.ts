@@ -90,11 +90,42 @@ export interface QueryRetrievalMetadata {
   reason: string[]
 }
 
+export type ArchToolName =
+  | 'arch_show'
+  | 'arch_deps'
+  | 'arch_context'
+  | 'arch_query'
+
+export interface NextAction {
+  tool: ArchToolName
+  priority: number
+  args: Record<string, unknown>
+  reason: string
+  confidence?: number
+  expectedValue?: string
+  sourceResultId?: string
+}
+
+export interface NextActionAmbiguity {
+  type: 'multiple_candidate_clusters' | 'ambiguous_query_intent' | 'low_confidence_results'
+  message: string
+}
+
+export interface NextActionContext {
+  command: 'context' | 'query' | 'show' | 'deps'
+  query?: string
+  target?: string
+  retrievalMetadata?: QueryRetrievalMetadata
+  results: RetrievedItem[]
+}
+
 export interface HybridRetrievalResult {
   query: string
   mode: RetrievalMode
   retrievalMetadata: QueryRetrievalMetadata
   results: RetrievedItem[]
+  nextActions?: NextAction[]
+  ambiguities?: NextActionAmbiguity[]
 }
 
 export interface ConfidenceEvaluation {

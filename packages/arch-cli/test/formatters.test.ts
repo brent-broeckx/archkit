@@ -58,6 +58,14 @@ describe('cli formatters', () => {
     const queryResult = {
       term: 'auth',
       matches: [{ nodeId: 'method:src/a.ts#Auth.login', type: 'method' as const, name: 'Auth.login', file: 'src/a.ts' }],
+      nextActions: [
+        {
+          tool: 'arch_show' as const,
+          priority: 1,
+          args: { target: 'Auth.login' },
+          reason: 'Top-ranked symbol',
+        },
+      ],
     }
     const depsResult = {
       input: 'Auth.login',
@@ -65,6 +73,14 @@ describe('cli formatters', () => {
       imports: ['src/lib.ts'],
       calls: ['generateToken'],
       callers: ['entry'],
+      nextActions: [
+        {
+          tool: 'arch_show' as const,
+          priority: 1,
+          args: { target: 'generateToken' },
+          reason: 'Strong connected node',
+        },
+      ],
     }
     const contextResult = {
       query: 'auth',
@@ -73,13 +89,24 @@ describe('cli formatters', () => {
       files: ['src/a.ts'],
       paths: [['Auth.login', 'generateToken']],
       snippets: [{ file: 'src/a.ts', symbol: 'Auth.login', startLine: 1, endLine: 4 }],
+      nextActions: [
+        {
+          tool: 'arch_show' as const,
+          priority: 1,
+          args: { target: 'Auth.login' },
+          reason: 'Representative entrypoint',
+        },
+      ],
     }
 
     expect(formatQueryResult(queryResult, 'human')).toContain('Matches')
+    expect(formatQueryResult(queryResult, 'human')).toContain('Recommended next steps')
     expect(formatQueryResult(queryResult, 'llm')).toContain('# Query: auth')
     expect(formatDepsResult(depsResult, 'human')).toContain('Imports')
+    expect(formatDepsResult(depsResult, 'llm')).toContain('## Recommended next steps')
     expect(formatDepsResult(depsResult, 'llm')).toContain('## Calls')
     expect(formatContextResult(contextResult, 'human')).toContain('Entrypoints')
+    expect(formatContextResult(contextResult, 'llm')).toContain('## Recommended next steps')
     expect(formatContextResult(contextResult, 'human')).toContain('feature: authentication')
     expect(formatContextResult(contextResult, 'llm')).toContain('## Flow')
     expect(formatContextResult(contextResult, 'llm')).toContain('## Resolution')
@@ -154,9 +181,43 @@ describe('cli formatters', () => {
       loc: { startLine: 10, endLine: 12 },
     }
 
-    expect(formatShowResult({ input: 'run', node: tsNode, snippet: 'const x = 1' }, 'llm')).toContain('```ts')
+    expect(
+      formatShowResult(
+        {
+          input: 'run',
+          node: tsNode,
+          snippet: 'const x = 1',
+          nextActions: [
+            {
+              tool: 'arch_deps',
+              priority: 1,
+              args: { target: 'run' },
+              reason: 'Inspect graph neighborhood',
+            },
+          ],
+        },
+        'llm',
+      ),
+    ).toContain('## Recommended next steps')
     expect(formatShowResult({ input: 'run', node: otherNode, snippet: '' }, 'llm')).toContain('```\n```')
     expect(formatShowResult({ input: 'run', node: tsNode, snippet: 'const x = 1' }, 'json')).toContain('"code": "const x = 1"')
+    expect(
+      formatQueryResult(
+        {
+          term: 'auth',
+          matches: [],
+          nextActions: [
+            {
+              tool: 'arch_context',
+              priority: 1,
+              args: { query: 'auth' },
+              reason: 'Broaden context',
+            },
+          ],
+        },
+        'json',
+      ),
+    ).toContain('"next_actions"')
   })
 
   it('formats knowledge results across actions and empty states', () => {

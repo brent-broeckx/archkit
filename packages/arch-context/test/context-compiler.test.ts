@@ -71,6 +71,14 @@ describe('context-compiler', () => {
         semanticUsed: false,
         reason: [],
       },
+      nextActions: [
+        {
+          tool: 'arch_show',
+          priority: 1,
+          args: { target: 'entry' },
+          reason: 'Top-ranked symbol',
+        },
+      ],
       results: [
         {
           id: nodes[0].id,
@@ -102,6 +110,14 @@ describe('context-compiler', () => {
     expect(result.entrypoints).toEqual(['entry'])
     expect(result.paths).toEqual([['entry', 'next']])
     expect(result.files).toEqual(['src/a.ts', 'src/b.ts'])
+    expect(result.nextActions).toEqual([
+      {
+        tool: 'arch_show',
+        priority: 1,
+        args: { target: 'entry' },
+        reason: 'Top-ranked symbol',
+      },
+    ])
     expect(result.snippets).toEqual([
       {
         file: 'src/a.ts',
@@ -194,6 +210,11 @@ describe('context-compiler', () => {
 
     expect(result.resolution).toEqual({ kind: 'feature', feature: 'authentication' })
     expect(result.entrypoints).toEqual(['login', 'logout'])
+    expect(result.nextActions?.[0]).toMatchObject({
+      tool: 'arch_show',
+      priority: 1,
+    })
+    expect(result.nextActions?.some((action) => action.tool === 'arch_deps')).toBe(true)
     expect(mockExecuteHybridRetrieval).not.toHaveBeenCalled()
   })
 

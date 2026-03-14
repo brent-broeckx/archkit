@@ -199,6 +199,14 @@ describe('cli execute commands', () => {
         semanticUsed: false,
         reason: [],
       },
+      nextActions: [
+        {
+          tool: 'arch_show',
+          priority: 1,
+          args: { target: 'Auth.login' },
+          reason: 'Top-ranked symbol',
+        },
+      ],
       results: [
         {
           id: nodeB.id,
@@ -244,6 +252,10 @@ describe('cli execute commands', () => {
     expect(result.term).toBe('Auth')
     expect(result.matches.map((match) => match.nodeId)).toEqual([nodeA.id, nodeB.id])
     expect(result.retrievalMetadata?.queryType).toBe('symbol')
+    expect(result.nextActions?.[0]).toMatchObject({
+      tool: 'arch_show',
+      priority: 1,
+    })
   })
 
   it('validates query input and graph-not-found mapping', async () => {
@@ -271,7 +283,18 @@ describe('cli execute commands', () => {
       callers: [],
     })
 
-    await expect(executeDepsCommand('Auth.login', '/repo')).resolves.toMatchObject({ calls: ['generateToken'] })
+    const depsResult = await executeDepsCommand('Auth.login', '/repo')
+    expect(depsResult).toMatchObject({
+      calls: ['generateToken'],
+    })
+    expect(depsResult.nextActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tool: 'arch_show',
+          args: { target: 'generateToken' },
+        }),
+      ]),
+    )
     await expect(executeDepsCommand('', '/repo')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
 
     mockResolveSymbolInput.mockResolvedValueOnce({ input: 'x', nodes: [] })
@@ -314,7 +337,18 @@ describe('cli execute commands', () => {
 
     mockResolveSymbolInput.mockResolvedValue({ input: 'run', nodes: [node] })
     mockExtractSnippetForNode.mockResolvedValue('const run = () => 1')
-    await expect(executeShowCommand('run', '/repo')).resolves.toMatchObject({ snippet: 'const run = () => 1' })
+    const showResult = await executeShowCommand('run', '/repo')
+    expect(showResult).toMatchObject({
+      snippet: 'const run = () => 1',
+    })
+    expect(showResult.nextActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          tool: 'arch_deps',
+          args: { target: node.id },
+        }),
+      ]),
+    )
 
     await expect(executeShowCommand(' ', '/repo')).rejects.toMatchObject({ code: 'INVALID_INPUT' })
 

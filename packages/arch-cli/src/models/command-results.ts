@@ -8,6 +8,8 @@ import type {
   FeatureSummary,
   KnowledgeEntry,
   KnowledgeEntrySummary,
+  NextAction,
+  NextActionAmbiguity,
   QueryRetrievalMetadata,
   RetrievedItem,
   RetrievalMode,
@@ -45,6 +47,8 @@ export interface QueryCommandResult {
   mode?: RetrievalMode
   retrievalMetadata?: QueryRetrievalMetadata
   results?: RetrievedItem[]
+  nextActions?: NextAction[]
+  ambiguities?: NextActionAmbiguity[]
   matches: QueryCommandMatch[]
 }
 
@@ -52,6 +56,7 @@ export interface ShowCommandResult {
   input: string
   node: ArchNode
   snippet: string
+  nextActions?: NextAction[]
 }
 
 export interface DeadCodeCommandResult {

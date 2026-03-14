@@ -13,6 +13,7 @@ import { runLexicalRetrieval } from './lexical-retriever'
 import { mergeRetrievalResults } from './result-merger'
 import { rerankRetrievedItems } from './result-ranker'
 import { runSemanticRetrieval } from './semantic-retriever'
+import { buildNextActions, ensureReasonableActionSet } from './next-action-engine'
 
 export async function executeHybridRetrieval(
   rootDir: string,
@@ -106,11 +107,22 @@ export async function executeHybridRetrieval(
       .filter((reason) => lexicalUsed || mode === 'lexical' || !reason.startsWith('lexical index unavailable')),
   }
 
+  const recommendations = buildNextActions({
+    query,
+    command: 'query',
+    retrievalMetadata,
+    results: ranked,
+    maxActions: 4,
+  })
+  const nextActions = ensureReasonableActionSet(recommendations.nextActions, query)
+
   return {
     query,
     mode,
     retrievalMetadata,
     results: ranked,
+    nextActions,
+    ambiguities: recommendations.ambiguities,
   }
 }
 

@@ -1,5 +1,6 @@
 import type { ContextCommandResult } from '../models/command-results'
 import type { OutputMode } from '../models/output-mode'
+import { formatNextActionsHuman, formatNextActionsLlm } from './next-actions'
 import { formatRetrievalMetadataHuman, formatRetrievalMetadataLlm } from './retrieval'
 
 export function formatContextResult(result: ContextCommandResult, mode: OutputMode): string {
@@ -14,6 +15,8 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
       files: result.files,
       paths: result.paths,
       snippets: result.snippets,
+      next_actions: result.nextActions ?? [],
+      ambiguities: result.ambiguities ?? [],
     }
 
     return JSON.stringify(jsonResult, null, 2)
@@ -50,6 +53,11 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
       })
     }
 
+    const nextActionLines = formatNextActionsLlm(result.nextActions)
+    if (nextActionLines.length > 0) {
+      lines.push('', ...nextActionLines)
+    }
+
     return lines.join('\n')
   }
 
@@ -80,6 +88,11 @@ export function formatContextResult(result: ContextCommandResult, mode: OutputMo
         `  ${snippet.symbol} (${snippet.file}:${snippet.startLine}-${snippet.endLine})${toEvidenceSuffix(snippet.evidence)}`,
       )
     })
+  }
+
+  const nextActionLines = formatNextActionsHuman(result.nextActions)
+  if (nextActionLines.length > 0) {
+    lines.push('', ...nextActionLines)
   }
 
   return lines.join('\n')

@@ -2,6 +2,7 @@ import { extractSnippetForNode, resolveSymbolInput } from '@archkit/graph'
 import { formatShowResult } from '../formatters/show'
 import type { ShowCommandResult } from '../models/command-results'
 import type { OutputOptions } from '../models/output-mode'
+import { buildShowNextActions } from '../services/next-actions'
 import { CliCommandError, handleCommandError, resolveOutputMode, writeFormattedOutput } from '../utils/command-output'
 
 export async function executeShowCommand(
@@ -42,6 +43,7 @@ export async function executeShowCommand(
       input: symbolInput,
       node: selectedNode,
       snippet,
+      nextActions: buildShowNextActions(symbolInput, selectedNode),
     }
   } catch (error) {
     if (error instanceof CliCommandError) {
