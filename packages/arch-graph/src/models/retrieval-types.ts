@@ -4,7 +4,25 @@ export type QueryType = 'symbol' | 'path' | 'conceptual' | 'mixed'
 
 export type RetrievalItemKind = 'file' | 'symbol' | 'module'
 
-export type RetrievalSource = 'deterministic' | 'semantic'
+export type RetrievalSource = 'deterministic' | 'lexical' | 'semantic'
+
+export type LexicalEntryKind = 'file' | 'symbol' | 'feature' | 'readme' | 'doc'
+
+export interface LexicalIndexMeta {
+  version: number
+  builtAt: string
+  documentCount: number
+}
+
+export interface LexicalSearchResult {
+  kind: 'file' | 'symbol' | 'feature'
+  path: string
+  symbol?: string
+  score: number
+  entryId: string
+  nodeIds: string[]
+  evidence: RetrievalEvidence[]
+}
 
 export interface RetrievalEvidence {
   type:
@@ -15,11 +33,13 @@ export interface RetrievalEvidence {
     | 'substring_match'
     | 'token_match'
     | 'doc_comment_match'
+    | 'bm25_match'
     | 'graph_proximity'
     | 'semantic_match'
   value: string
   score: number
   source: RetrievalSource
+  field?: 'path' | 'file_name' | 'symbol_name' | 'symbol_kind' | 'feature_name' | 'content'
 }
 
 export interface ScoreBreakdown {
@@ -65,6 +85,7 @@ export interface QueryRetrievalMetadata {
   mode: RetrievalMode
   queryType: QueryType
   deterministicConfidence: number
+  lexicalUsed: boolean
   semanticUsed: boolean
   reason: string[]
 }

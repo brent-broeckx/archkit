@@ -27,6 +27,8 @@ export type {
 	DeterministicCandidate,
 	DeterministicRetrievalResult,
 	HybridRetrievalResult,
+	LexicalIndexMeta,
+	LexicalSearchResult,
 	QueryRetrievalMetadata,
 	QueryType,
 	RetrievedItem,
@@ -76,11 +78,18 @@ export {
 	readPersistedFilesIndex,
 	readPersistedNodes,
 	readPersistedSymbolsIndex,
+	getLexicalIndexPath,
+	lexicalIndexExists,
 } from './services/persisted-read'
 export { extractSnippetForNode } from './services/snippet'
 export {
 	executeHybridRetrieval,
 } from './services/retrieval/hybrid-retrieval-engine'
+export { buildLexicalIndex } from './services/retrieval/fts-index-builder'
+export {
+	clearLexicalRetrievalCache,
+	runLexicalRetrieval,
+} from './services/retrieval/lexical-retriever'
 export {
 	classifyQuery,
 } from './services/retrieval/query-classifier'

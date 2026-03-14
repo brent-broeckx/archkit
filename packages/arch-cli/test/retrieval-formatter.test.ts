@@ -15,6 +15,7 @@ describe('retrieval formatter', () => {
       mode: 'hybrid' as const,
       queryType: 'conceptual' as const,
       deterministicConfidence: 0.42,
+      lexicalUsed: true,
       semanticUsed: true,
       reason: ['no exact symbol match'],
     }
@@ -23,6 +24,7 @@ describe('retrieval formatter', () => {
     const llm = formatRetrievalMetadataLlm(metadata)
 
     expect(human.join('\n')).toContain('mode: hybrid')
+    expect(human.join('\n')).toContain('lexical used: yes')
     expect(human.join('\n')).toContain('reason:')
     expect(llm.join('\n')).toContain('- reason: no exact symbol match')
 

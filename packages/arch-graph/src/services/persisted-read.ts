@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises'
+import { access, readFile } from 'node:fs/promises'
+import { constants as fsConstants } from 'node:fs'
 import path from 'node:path'
 import type { ArchEdge, ArchNode } from '@archkit/core'
 
@@ -34,4 +35,17 @@ export async function readPersistedFilesIndex(rootDir: string): Promise<string[]
   const filesPath = path.join(rootDir, '.arch', 'index', 'files.json')
   const content = await readFile(filesPath, 'utf-8')
   return JSON.parse(content) as string[]
+}
+
+export function getLexicalIndexPath(rootDir: string): string {
+  return path.join(rootDir, '.arch', 'index', 'lexical.db')
+}
+
+export async function lexicalIndexExists(rootDir: string): Promise<boolean> {
+  try {
+    await access(getLexicalIndexPath(rootDir), fsConstants.F_OK)
+    return true
+  } catch {
+    return false
+  }
 }

@@ -195,6 +195,7 @@ describe('cli execute commands', () => {
         mode: 'hybrid',
         queryType: 'symbol',
         deterministicConfidence: 0.9,
+        lexicalUsed: false,
         semanticUsed: false,
         reason: [],
       },

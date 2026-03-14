@@ -6,7 +6,7 @@ export function rerankRetrievedItems(items: RetrievedItem[]): RetrievedItem[] {
       item.scoreBreakdown.exactScore * 1.0 +
       item.scoreBreakdown.featureScore * 0.9 +
       item.scoreBreakdown.graphScore * 0.7 +
-      item.scoreBreakdown.lexicalScore * 0.5 +
+      item.scoreBreakdown.lexicalScore * 0.6 +
       item.scoreBreakdown.semanticScore * 0.35
 
     const exactStrong = item.scoreBreakdown.exactScore >= 90
