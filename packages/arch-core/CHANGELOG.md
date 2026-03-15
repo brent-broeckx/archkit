@@ -1,5 +1,12 @@
 # @archkit/core
 
+## 0.4.0
+
+### Minor Changes
+
+- 498ee23: Implement next recommended tool calls
+- 757c774: Initial MCP server setup added
+
 ## 0.3.0
 
 ### Minor Changes
