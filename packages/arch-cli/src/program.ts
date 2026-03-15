@@ -109,8 +109,8 @@ export function buildProgram(): Command {
   program
     .command('mcp')
     .description('Start MCP server (stdio transport)')
-    .argument('[repoPath]', 'Repository path', '.')
-    .action(async (repoPath: string | undefined) => {
+    .argument('<repoPath>', 'Repository path (required)')
+    .action(async (repoPath: string) => {
       await runMcpCommand(repoPath)
     })
 

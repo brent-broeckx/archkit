@@ -15,10 +15,10 @@ The Arch MCP server exposes these tools:
 - `arch_features`
 - `arch_knowledge`
 
-The server is started through the Arch CLI command:
+The server is started through the Arch CLI command; you must provide the repository root when launching:
 
 ```bash
-arch mcp
+arch mcp <repoPath>
 ```
 
 ## Prerequisites
@@ -118,14 +118,15 @@ Detection order:
 
 This allows global configurations to work across repositories, as long as the MCP client launches in the intended project folder.
 
+
 ## Quick test
 
-Run this in the repository you want to query:
+Run this in the repository you want to query and provide the repo root explicitly:
 
 ```bash
 arch init
 arch build
-arch mcp
+arch mcp .
 ```
 
 Then call a tool from your MCP client, for example `arch_context` with:

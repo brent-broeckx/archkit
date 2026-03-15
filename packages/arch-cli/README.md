@@ -426,20 +426,19 @@ arch knowledge search deterministic
 arch knowledge search architecture --format llm
 ```
 
-### arch mcp [repoPath]
+### arch mcp <repoPath>
 
-Start the Arch MCP server over stdio for IDE and agent integrations.
+Start the Arch MCP server over stdio for IDE and agent integrations. The `repoPath` argument is required and must point to the repository root where `.arch` is located (or will be created).
 
 Arguments and options:
 
-- `repoPath` optional repository path (default `.`)
+- `repoPath` repository path (required)
 - `--json`
 - `--format <format>` (`human|llm`)
 
 Examples:
 
 ```bash
-arch mcp
 arch mcp .
 arch mcp /path/to/repo
 ```
